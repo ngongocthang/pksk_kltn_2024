@@ -35,6 +35,7 @@ const corsOptions = {
   origin: ["https://pksk-kltn-2024.vercel.app/", "https://admin-pksk-kltn-2024.vercel.app/"],
   // origin: [FRONTEND_URI, ADMIN_URI],
   methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
 };
 
