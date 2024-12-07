@@ -47,14 +47,14 @@ app.use((req, res, next) => {
   next();
 });
 // Cron job
-// cron.schedule("* 7 * * *", async () => {
-//   try {
-//     await sendAppointmentReminders();
-//     console.log("Email reminders triggered successfully.");
-//   } catch (error) {
-//     console.error("Error triggering email reminders:", error);
-//   }
-// });
+cron.schedule("* 7 * * *", async () => {
+  try {
+    await sendAppointmentReminders();
+    console.log("Email reminders triggered successfully.");
+  } catch (error) {
+    console.error("Error triggering email reminders:", error);
+  }
+});
 
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
