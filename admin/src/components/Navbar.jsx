@@ -10,6 +10,7 @@ import { DoctorContext } from "../context/DoctorContext";
 import "../index.css";
 
 const VITE_BACKEND_URI = import.meta.env.VITE_BACKEND_URI;
+const VITE_ADMIN_URI = import.meta.env.VITE_ADMIN_URI;
 
 const Navbar = () => {
   const { aToken, setAToken } = useContext(AdminContext);
@@ -131,7 +132,7 @@ const Navbar = () => {
   return (
     <div className="flex justify-between items-center px-4 sm:px-10 py-3 border-b bg-white sticky top-0 z-50">
       <a
-        href={aToken ? `${VITE_BACKEND_URI}` : `${VITE_BACKEND_URI}/doctor-dashboard`}
+        href={aToken ? `${VITE_ADMIN_URI}/admin-dashboard` : `${VITE_BACKEND_URI}/doctor-dashboard`}
       >
         <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-xs">
           <img
