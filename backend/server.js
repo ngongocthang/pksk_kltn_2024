@@ -40,16 +40,7 @@ const corsOptions = {
 };
 
 // Sử dụng middleware CORS với các tùy chọn
-// app.use(cors(corsOptions));
-// Middleware xử lý preflight request (OPTIONS)
-app.options("*", (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.status(204).end();
-});
-
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
