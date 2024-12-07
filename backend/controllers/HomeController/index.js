@@ -16,7 +16,7 @@ JWT_SECRET = process.env.JWT_SECRET;
 const { OAuth2Client } = require('google-auth-library');
 const client = new OAuth2Client(process.env.GG_CLIENT_ID);
 const transporter = require("../../helpers/mailer-config");
-const FRONTEND_URI = process.env.FRONTEND_URI;
+const {FRONTEND_URI} = process.env.FRONTEND_URI;
 
 
 const register = async (req, res) => {
@@ -379,7 +379,7 @@ const forgotPassword = async (req, res) => {
     await user.save();
 
     // Gửi email khôi phục mật khẩu
-    const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
+    const resetUrl = `${FRONTEND_URI}/reset-password/${resetToken}`;
     const mailOptions = {
       to: email,
       subject: "Khôi phục mật khẩu",
