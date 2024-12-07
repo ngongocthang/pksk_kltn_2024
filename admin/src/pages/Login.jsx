@@ -22,8 +22,8 @@ const Login = () => {
         event.preventDefault()
 
         try {
-            // const response = await axios.post(`${backendUrl}/login`, { email, password })
-            const response = await axios.post(backendUrl + '/login', { email, password })
+            const response = await axios.post(`${backendUrl}login`, { email, password })
+            // const response = await axios.post(backendUrl + '/login', { email, password })
 
             if (response.data.user) {
                 const { role, token, ...userInfo } = response.data.user;
