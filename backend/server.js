@@ -7,8 +7,8 @@ const session = require("express-session");
 const cron = require("node-cron");
 const sendAppointmentReminders = require("./services/index");
 
-const FRONTEND_URI  = process.env.FRONTEND_URI;
-const ADMIN_URI = process.env.ADMIN_URI;
+// const FRONTEND_URI  = process.env.FRONTEND_URI;
+// const ADMIN_URI = process.env.ADMIN_URI;
 
 const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
 const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY;
@@ -32,7 +32,7 @@ const app = express();
 
 // Cấu hình CORS
 const corsOptions = {
-  origin: ["https://pksk-kltn-2024.vercel.app/", "https://admin-pksk-kltn-2024.vercel.app/"],
+  origin: ["https://pksk-kltn-2024.vercel.app", "https://admin-pksk-kltn-2024.vercel.app"],
   // origin: [FRONTEND_URI, ADMIN_URI],
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"],
