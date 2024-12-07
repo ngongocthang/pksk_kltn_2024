@@ -11,6 +11,6 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: 'build', // Thay đổi 'build' nếu bạn muốn sử dụng tên thư mục khác
+    outDir: 'build',
   },
 });
