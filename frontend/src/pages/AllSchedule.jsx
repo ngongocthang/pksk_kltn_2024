@@ -22,7 +22,7 @@ const AllSchedule = () => {
   const phone = localStorage.getItem("user")
   ? JSON.parse(localStorage.getItem("user")).phone
   : "";
-  const patient_id = user?.id || (user ? JSON.parse(localStorage.getItem("user"))._id : null);
+  const patient_id = user?.id || (localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user"))._id : null);
 
   if (typeof console !== "undefined") {
     console.error = function () {};
