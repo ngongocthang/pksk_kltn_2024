@@ -62,7 +62,8 @@ const Dashboard = () => {
               Authorization: `Bearer ${aToken}`,
             },
           });
-          const data = response.data; // Lấy dữ liệu từ response
+          const data = response.data; // Lấy dữ liệu từ responses
+          console.log("data", data);
 
           // Cập nhật doanh thu vào tháng tương ứng
           const updatedRevenueData = revenueData.map((item) => {
@@ -120,6 +121,7 @@ const Dashboard = () => {
       },
     ],
   };
+  console.log("chartData", chartData);
 
   const options = {
     responsive: true,
