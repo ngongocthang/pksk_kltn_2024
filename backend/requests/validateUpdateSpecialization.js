@@ -1,5 +1,6 @@
 const Joi = require("joi");
 
+// Sửa schema để chỉ kiểm tra trường "image" nếu có file
 const specializationSchema = Joi.object({
   name: Joi.string().min(1).required().messages({
     "string.base": "Tên chuyên khoa phải là một chuỗi.",
@@ -12,21 +13,11 @@ const specializationSchema = Joi.object({
     "string.empty": "Mô tả không được để trống.",
     "any.required": "Mô tả là bắt buộc.",
   }),
-  image: Joi.any()
-  .custom((value, helpers) => {
-    const validImageTypes = ['image/jpeg', 'image/png', 'image/gif'];
-
-    // Check if `mimetype` exists and is valid
-    if (!value || !value.mimetype || !validImageTypes.includes(value.mimetype)) {
-      // Use helpers.message to ensure the custom message is always shown
-      return helpers.message('Tệp tải lên phải là một ảnh (JPEG, PNG, GIF).');
-    }
-    return value;
-  }),
+  image: Joi.any().optional(), // Không kiểm tra file tại đây
 });
 
-const validateSpecialization = (data) => {
-  return specializationSchema.validate(data);
+const validateUpdateSpecialization = (data) => {
+  return specializationSchema.validate(data, { abortEarly: false });
 };
 
-module.exports = validateSpecialization;
+module.exports = validateUpdateSpecialization;
