@@ -30,6 +30,7 @@ const Navbar = () => {
       });
       const data = response.data;
 
+      console.log("log notification",response);
 
       // Kiểm tra nếu dữ liệu là mảng
       if (Array.isArray(data)) {
@@ -42,7 +43,7 @@ const Navbar = () => {
         setNotifications([]);
       }
     } catch (error) {
-      // console.error("Error fetching notifications:", error);
+      console.error("Error fetching notifications:", error);
     }
   };
 
