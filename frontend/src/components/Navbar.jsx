@@ -26,6 +26,7 @@ const Navbar = () => {
   const fetchUnreadNotifications = async () => {
     try {
       const response = await axios.get(`${VITE_BACKEND_URI}/notification`, {
+        timeout: 10000 ,
         headers: { Authorization: `Bearer ${user.token}` },
       });
       const data = response.data;
