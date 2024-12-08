@@ -62,25 +62,40 @@ const Dashboard = () => {
               Authorization: `Bearer ${aToken}`,
             },
           });
-          const data = response.data; // Lấy dữ liệu từ responses
-          console.log("data", data);
-
-          // Cập nhật doanh thu vào tháng tương ứng
+          const data = response.data;
+    
+          // Chuyển đổi tên tháng từ tiếng Anh sang tiếng Việt
+          const monthMapping = {
+            January: "Tháng 1",
+            February: "Tháng 2",
+            March: "Tháng 3",
+            April: "Tháng 4",
+            May: "Tháng 5",
+            June: "Tháng 6",
+            July: "Tháng 7",
+            August: "Tháng 8",
+            September: "Tháng 9",
+            October: "Tháng 10",
+            November: "Tháng 11",
+            December: "Tháng 12",
+          };
+    
+          // Cập nhật dữ liệu doanh thu
           const updatedRevenueData = revenueData.map((item) => {
-            // Chuyển đổi tháng từ API sang định dạng tiếng Việt
-            const revenueItem = data.find((d) => d.month === convertMonthToVietnamese(item.month));
+            const revenueItem = data.find((d) => monthMapping[d.month] === item.month);
             return {
               ...item,
               revenue: revenueItem ? revenueItem.revenue : 0,
             };
           });
-
+    
           setRevenueData(updatedRevenueData);
         } catch (error) {
           console.error("Error fetching revenue data:", error);
         }
       }
     };
+    
 
     fetchRevenueData();
     getDashData();
@@ -88,25 +103,6 @@ const Dashboard = () => {
     getAllDoctors();
     getUpcomingApointmentsDashData();
   }, [aToken]);
-
-  // Hàm chuyển đổi tháng từ tiếng Anh sang tiếng Việt
-  const convertMonthToVietnamese = (month) => {
-    const monthMapping = {
-      "January": "Tháng 1",
-      "February": "Tháng 2",
-      "March": "Tháng 3",
-      "April": "Tháng 4",
-      "May": "Tháng 5",
-      "June": "Tháng 6",
-      "July": "Tháng 7",
-      "August": "Tháng 8",
-      "September": "Tháng 9",
-      "October": "Tháng 10",
-      "November": "Tháng 11",
-      "December": "Tháng 12",
-    };
-    return monthMapping[month] || month; // Trả về tháng gốc nếu không tìm thấy
-  };
 
   // Cấu hình biểu đồ
   const chartData = {
@@ -121,7 +117,7 @@ const Dashboard = () => {
       },
     ],
   };
-  console.log("chartData", chartData);
+  console.log("revenueData", revenueData);
 
   const options = {
     responsive: true,
