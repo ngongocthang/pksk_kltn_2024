@@ -19,6 +19,7 @@ const AllSchedule = () => {
   const [isToastVisible, setIsToastVisible] = useState(false);
   const [loading, setLoading] = useState(true); 
   const token = user?.token || localStorage.getItem("token");
+  const userLocalStorage = localStorage.getItem("user")
   const phone = localStorage.getItem("user")
   ? JSON.parse(localStorage.getItem("user")).phone
   : "";
@@ -108,6 +109,20 @@ const AllSchedule = () => {
   
     const formattedDate = formatDate(appointmentData.work_date);
     setIsToastVisible(true);
+
+       // Kiểm tra số điện thoại
+       if (!userLocalStorage) {
+        toast.warn(
+              "Bạn chưa chưa đăng nhập. Vui lòng đăng nhập trước khi đặt lịch hẹn.",
+          {
+            position: "top-center",
+            autoClose: true,
+            closeOnClick: false,
+            draggable: false,
+          }
+        );
+        return;
+      }
   
     // Kiểm tra số điện thoại
     if (!phone) {
