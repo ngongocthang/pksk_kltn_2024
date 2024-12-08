@@ -17,13 +17,17 @@ const AllSchedule = () => {
   const [events, setEvents] = useState([]);
   const { user } = useContext(AppContext);
   const [isToastVisible, setIsToastVisible] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); 
   const token = user?.token || localStorage.getItem("token");
   const phone = localStorage.getItem("user")
-    ? JSON.parse(localStorage.getItem("user")).phone
-    : "";
-  const patient_id = user?.id || (localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user"))._id : null);
+  ? JSON.parse(localStorage.getItem("user")).phone
+  : "";
+  const patient_id = user?.id ? user?.id : JSON.parse(localStorage.getItem("user"))._id;
 
+  if (typeof console !== "undefined") {
+    console.error = function () {};
+  }
+  
   useEffect(() => {
     const fetchSchedules = async () => {
       setLoading(true);
@@ -63,61 +67,76 @@ const AllSchedule = () => {
 
         setDoctors(resources);
         setEvents(mappedEvents);
-        setLoading(false);
       } catch (error) {
         console.error("Lỗi khi tải dữ liệu:", error);
         toast.error("Có lỗi xảy ra khi tải lịch làm việc.");
-        setLoading(false);
       }
     };
 
     fetchSchedules();
   }, []);
-
+  
   const handleEventClick = (info) => {
     if (isToastVisible) {
       return;
     }
-
+  
     const clickedEvent = info.event;
     const convertTitle = clickedEvent.title === "Sáng" ? "morning" : "afternoon";
-
+  
+    // Lấy ngày làm việc từ sự kiện
     const workDate = new Date(clickedEvent.start).toISOString().split("T")[0];
     const currentDate = new Date().toISOString().split("T")[0];
-
+  
+    // Kiểm tra xem lịch làm việc đã ở quá khứ chưa
     if (workDate < currentDate) {
       toast.error("Không thể đặt lịch hẹn cho ngày đã qua!");
       return;
     }
-
+  
     const formatDate = (isoDate) => {
       const [year, month, day] = isoDate.split("-");
       return `${day}/${month}/${year}`;
     };
-
+  
     const appointmentData = {
-      patient_id: patient_id, // patient_id có thể là null
+      patient_id: patient_id,
       doctor_id: clickedEvent.getResources()[0]?.id || "",
       work_shift: convertTitle,
       work_date: workDate,
     };
-
+  
     const formattedDate = formatDate(appointmentData.work_date);
-
-    if (!patient_id) {
+    setIsToastVisible(true);
+  
+    // Kiểm tra số điện thoại
+    if (!phone) {
       toast.warn(
         <div className="flex flex-col items-center justify-center">
-          <p className="mb-2 text-lg font-bold">Yêu cầu đăng nhập</p>
-          <p>Vui lòng đăng nhập để đặt lịch hẹn!</p>
-          <button
-            onClick={() => {
-              navigate("/account");
-              toast.dismiss();
-            }}
-            className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-          >
-            Đăng nhập
-          </button>
+          <div className="flex items-center mb-2">
+            <p className="font-bold text-lg">Cảnh báo</p>
+          </div>
+          <p>Bạn chưa cập nhật số điện thoại. Vui lòng cập nhật trước khi đặt lịch hẹn.</p>
+          <div className="flex justify-center gap-4 mt-4">
+            <button
+              onClick={() => {
+                navigate("/my-profile");
+                setIsToastVisible(false);
+              }}
+              className="bg-green-500 text-white px-4 py-2 rounded transition duration-300 hover:bg-green-600"
+            >
+              Cập nhật
+            </button>
+            <button
+              onClick={() => {
+                toast.dismiss();
+                setIsToastVisible(false);
+              }}
+              className="bg-gray-300 text-black px-4 py-2 rounded transition duration-300 hover:bg-gray-400"
+            >
+              Hủy
+            </button>
+          </div>
         </div>,
         {
           position: "top-center",
@@ -128,14 +147,17 @@ const AllSchedule = () => {
       );
       return;
     }
-
-    setIsToastVisible(true);
+  
+    // Hiển thị thông báo xác nhận
     toast.info(
       <div className="flex flex-col items-center justify-center">
+        <div className="flex items-center mb-2">
+          <p className="font-bold text-lg">Xác nhận</p>
+        </div>
         <p>
           Bạn có chắc chắn muốn đặt lịch hẹn vào {formattedDate} ca {clickedEvent.title}?
         </p>
-        <div className="flex gap-4 mt-4">
+        <div className="flex justify-center gap-4 mt-4">
           <button
             onClick={async () => {
               toast.dismiss();
@@ -165,6 +187,7 @@ const AllSchedule = () => {
       }
     );
   };
+  
 
   const confirmBooking = async (appointmentData) => {
     const loggedInUser = user || JSON.parse(localStorage.getItem("user"));
@@ -176,7 +199,7 @@ const AllSchedule = () => {
       return;
     }
     try {
-      await axios.post(
+      const response = await axios.post(
         `${VITE_BACKEND_URI}/create-appointment/${patient_id}`,
         appointmentData,
         {
@@ -201,6 +224,7 @@ const AllSchedule = () => {
           </h1>
         </header>
         <div className="calendar-container shadow-md rounded-lg overflow-hidden border border-gray-300 bg-white">
+          {/* Thanh cuộn nằm ngang cho lịch */}
           <div className="overflow-x-auto" style={{ maxHeight: "640px", minWidth: "1200px" }}>
             <FullCalendar
               plugins={[resourceTimelinePlugin]}
