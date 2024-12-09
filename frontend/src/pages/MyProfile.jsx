@@ -110,6 +110,7 @@ const MyProfile = () => {
         ...user,
         name: userData.name,
         phone: userData.phone,
+        id: userIdObj.id || user._id,
       };
       setUser(updatedUser);
 
