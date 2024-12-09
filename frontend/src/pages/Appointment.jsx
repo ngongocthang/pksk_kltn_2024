@@ -16,7 +16,7 @@ const Appointment = () => {
   console.log("user", user);
   const navigate = useNavigate();
 
-  const phone = localStorage.getItem("user")
+  const phone = user.phone || localStorage.getItem("user")
     ? JSON.parse(localStorage.getItem("user")).phone
     : "";
 
