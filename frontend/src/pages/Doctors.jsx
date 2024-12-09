@@ -2,8 +2,36 @@ import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { convertToSlug } from "../utils/stringUtils";
+import AOS from "aos";
+import "aos/dist/aos.css"; // Import AOS styles
 
 const VITE_BACKEND_URI = import.meta.env.VITE_BACKEND_URI;
+
+const DoctorCardSkeleton = () => {
+  return (
+    <div className="border border-indigo-200 rounded-xl overflow-hidden">
+      {/* Image placeholder */}
+      <div className="relative">
+        <div className="h-48 bg-gray-200 animate-pulse" />
+        <div className="absolute top-2 left-2 bg-gray-200 animate-pulse h-6 w-24 rounded-full" />
+      </div>
+
+      {/* Content placeholder */}
+      <div className="p-4 space-y-3">
+        <div className="h-7 bg-gray-200 animate-pulse rounded w-[100%]" />
+        <div className="h-4 bg-gray-200 animate-pulse rounded w-1/2" />
+        <div className="h-4 bg-gray-200 animate-pulse rounded w-2/3" />
+        <div className="flex justify-between items-center">
+          <div className="h-4 bg-gray-200 animate-pulse rounded w-1/3" />
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-gray-200 rounded-full animate-pulse" />
+            <div className="h-4 bg-gray-200 animate-pulse rounded w-16" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const Doctors = () => {
   const { speciality } = useParams();
@@ -13,20 +41,24 @@ const Doctors = () => {
   const [doctors, setDoctors] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [doctorsPerPage] = useState(8);
-  const [selectedDate, setSelectedDate] = useState(""); 
-  const [isLoading, setIsLoading] = useState(false); 
+  const [selectedDate, setSelectedDate] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
+  useEffect(() => {
+    AOS.init({ duration: 900, once: true }); // Init AOS with 1s duration and only animate once
+  }, []);
+
   const fetchDoctors = async () => {
     try {
-      setIsLoading(true); 
+      setIsLoading(true);
       const response = await axios.get(`${VITE_BACKEND_URI}/doctor/find-all`);
       setDoctors(response.data.success ? response.data.doctors : []);
     } catch (error) {
       console.error("Error fetching doctors:", error);
     } finally {
-      setIsLoading(false); 
+      setIsLoading(false);
     }
   };
 
@@ -119,8 +151,11 @@ const Doctors = () => {
       <button
         key="prev"
         onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-        className={`py-1 px-3 border rounded w-[70px] ${currentPage === 1 ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "text-gray-600"
-          }`}
+        className={`py-1 px-3 border rounded w-[70px] ${
+          currentPage === 1
+            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+            : "text-gray-600"
+        }`}
         disabled={currentPage === 1}
       >
         Trước
@@ -132,8 +167,9 @@ const Doctors = () => {
       <button
         key={1}
         onClick={() => handlePageChange(1)}
-        className={`py-1 px-3 border rounded ${currentPage === 1 ? "bg-indigo-500 text-white" : "text-gray-600"
-          }`}
+        className={`py-1 px-3 border rounded ${
+          currentPage === 1 ? "bg-indigo-500 text-white" : "text-gray-600"
+        }`}
       >
         1
       </button>
@@ -149,13 +185,18 @@ const Doctors = () => {
     }
 
     // Hiển thị các trang xung quanh trang hiện tại
-    for (let i = Math.max(2, currentPage - delta); i <= Math.min(totalPages - 1, currentPage + delta); i++) {
+    for (
+      let i = Math.max(2, currentPage - delta);
+      i <= Math.min(totalPages - 1, currentPage + delta);
+      i++
+    ) {
       paginationItems.push(
         <button
           key={i}
           onClick={() => handlePageChange(i)}
-          className={`py-1 px-3 border rounded ${i === currentPage ? "bg-indigo-500 text-white" : "text-gray-600"
-            }`}
+          className={`py-1 px-3 border rounded ${
+            i === currentPage ? "bg-indigo-500 text-white" : "text-gray-600"
+          }`}
         >
           {i}
         </button>
@@ -177,8 +218,11 @@ const Doctors = () => {
         <button
           key={totalPages}
           onClick={() => handlePageChange(totalPages)}
-          className={`py-1 px-3 border rounded ${currentPage === totalPages ? "bg-indigo-500 text-white" : "text-gray-600"
-            }`}
+          className={`py-1 px-3 border rounded ${
+            currentPage === totalPages
+              ? "bg-indigo-500 text-white"
+              : "text-gray-600"
+          }`}
         >
           {totalPages}
         </button>
@@ -190,8 +234,11 @@ const Doctors = () => {
       <button
         key="next"
         onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-        className={`py-1 px-3 border rounded w-[70px] ${currentPage === totalPages ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "text-gray-600"
-          }`}
+        className={`py-1 px-3 border rounded w-[70px] ${
+          currentPage === totalPages
+            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+            : "text-gray-600"
+        }`}
         disabled={currentPage === totalPages}
       >
         Tiếp
@@ -214,25 +261,32 @@ const Doctors = () => {
     <div>
       {isLoading ? (
         <div className="flex justify-center items-center h-[80vh]">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900"></div>
+          <div className="flex flex-wrap gap-4">
+            {[...Array(8)].map((_, index) => (
+              <DoctorCardSkeleton key={index} />
+            ))}
+          </div>
         </div>
       ) : (
         <div>
-          <p className="text-gray-600 font-semibold text-[20px]">Các bác sĩ chuyên khoa.</p>
+          <p className="text-gray-600 font-semibold text-[20px]">
+            Các bác sĩ chuyên khoa.
+          </p>
           <div className="flex flex-col sm:flex-row items-start gap-5 mt-5">
             <button
-              className={`py-1 px-3 border rounded text-sm transition-all sm:hidden ${showFilter ? "bg-primary text-white" : ""
-                }`}
+              className={`py-1 px-3 border rounded text-sm transition-all sm:hidden ${
+                showFilter ? "bg-primary text-white" : ""
+              }`}
               onClick={() => setShowFilter((prev) => !prev)}
             >
               Filters
             </button>
             <div
-              className={`flex-col gap-4 text-[18px] text-gray-600 ${showFilter ? "flex" : "hidden sm:flex"
-                }`}
+              className={`flex-col gap-4 text-[18px] text-gray-600 ${
+                showFilter ? "flex" : "hidden sm:flex"
+              }`}
             >
               <h3 className="sm:hidden">Chuyên khoa:</h3>
-              {/* <h3>Chuyên khoa:</h3> */}
               {specializations.map((spec) => (
                 <div
                   key={spec._id}
@@ -241,10 +295,11 @@ const Doctors = () => {
                       ? navigate("/doctors")
                       : navigate(`/doctors/${convertToSlug(spec.name)}`)
                   }
-                  className={`w-[94vw] sm:w-40 pl-3 py-1.5 border border-gray-300 rounded transition-all cursor-pointer ${speciality === convertToSlug(spec.name)
-                    ? "bg-[#e0f4fb] text-[#00759c]"
-                    : ""
-                    }`}
+                  className={`w-[94vw] sm:w-40 pl-3 py-1.5 border border-gray-300 rounded transition-all cursor-pointer ${
+                    speciality === convertToSlug(spec.name)
+                      ? "bg-[#e0f4fb] text-[#00759c]"
+                      : ""
+                  }`}
                 >
                   <p className="m-0">{spec.name}</p>
                 </div>
@@ -258,7 +313,10 @@ const Doctors = () => {
               />
             </div>
 
-            <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 gap-y-6">
+            <div
+              className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 gap-y-6"
+              data-aos="fade-up"
+            >
               {currentDoctors.map((item, index) => (
                 <div
                   onClick={() => navigate(`/appointment/${item._id}`)}

@@ -11,24 +11,6 @@ require("moment/locale/vi");
 const User_role = require("../../models/User_role");
 const Role = require("../../models/Role");
 
-const createAppointment = async (req, res) => {
-  try {
-    // Validate dữ liệu từ client
-    const { error } = validateAppointment(req.body);
-    if (error) {
-      return res.status(400).json({ message: error.details[0].message });
-    }
-
-    const appointment = await Appointment.create(req.body);
-    if (appointment) {
-      return res.status(200).json(appointment);
-    }
-    return res.status(400).json({ message: "Appointment not found" });
-  } catch (error) {
-    return res.status(500).json({ message: error.message });
-  }
-};
-
 const findAllAppointment = async (req, res) => {
   try {
     const appointments = await Appointment.find({});
@@ -727,7 +709,6 @@ const deleteAppointmentByStatus = async (req, res) => {
 };
 
 module.exports = {
-  createAppointment,
   findAllAppointment,
   findAppointment,
   updateAppointment,
