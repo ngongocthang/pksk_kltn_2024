@@ -47,7 +47,7 @@ const AddPatient = () => {
       }
     } catch (error) {
       setLoading(false);
-      toast.error("Email đã được sử dụng!" || error.response?.data.message);
+      toast.error(error.response?.data.message || "Email đã được sử dụng!");
       console.log(error.response?.data || error.message);
     }
   };

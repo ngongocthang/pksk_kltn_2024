@@ -117,7 +117,6 @@ const Dashboard = () => {
       },
     ],
   };
-  console.log("revenueData", revenueData);
 
   const options = {
     responsive: true,
