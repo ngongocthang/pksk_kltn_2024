@@ -63,7 +63,6 @@ const Dashboard = () => {
             },
           });
           const data = response.data;
-          console.log("data", data);
     
           // Chuyển đổi tên tháng từ tiếng Anh sang tiếng Việt
           const monthMapping = {
@@ -118,8 +117,6 @@ const Dashboard = () => {
       },
     ],
   };
-
-  console.log("chartData", chartData);
 
   const options = {
     responsive: true,
@@ -235,7 +232,7 @@ const Dashboard = () => {
           </div>
 
           {/* Bảng */}
-          <div className="max-h-[400px] overflow-y-auto border border-gray-200 rounded-lg">
+          <div className="max-h-[420px] overflow-y-auto border border-gray-200 rounded-lg">
             <table className="w-full bg-white rounded-lg shadow-md">
               {/* Header */}
               <thead className="bg-gray-100 sticky top-0 z-10">
