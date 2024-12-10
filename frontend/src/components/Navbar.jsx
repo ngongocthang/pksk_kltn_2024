@@ -1,9 +1,8 @@
+import axios from 'axios';
 import React, { useContext, useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { assets } from "../assets/assets";
 import { AppContext } from "../context/AppContext";
-import axios from 'axios';
-
 
 const VITE_BACKEND_URI = import.meta.env.VITE_BACKEND_URI;
 
@@ -26,12 +25,10 @@ const Navbar = () => {
   const fetchUnreadNotifications = async () => {
     try {
       const response = await axios.get(`${VITE_BACKEND_URI}/notification`, {
-        timeout: 10000 ,
         headers: { Authorization: `Bearer ${user.token}` },
       });
       const data = response.data;
 
-      console.log("log notification",response);
 
       // Kiểm tra nếu dữ liệu là mảng
       if (Array.isArray(data)) {
@@ -44,16 +41,16 @@ const Navbar = () => {
         setNotifications([]);
       }
     } catch (error) {
-      console.error("Error fetching notifications:", error);
+      // console.error("Error fetching notifications:", error);
     }
   };
 
 
   useEffect(() => {
     if (user?.token) {
-      fetchUnreadNotifications(); 
-      const interval = setInterval(fetchUnreadNotifications, 1000); 
-      return () => clearInterval(interval); 
+      fetchUnreadNotifications();
+      const interval = setInterval(fetchUnreadNotifications, 1000);
+      return () => clearInterval(interval);
     }
   }, [user]);
 
@@ -96,7 +93,7 @@ const Navbar = () => {
       if (window.scrollY === 0) {
         setIsVisible(true);
       } else if (window.scrollY > lastScrollY) {
-        setIsVisible(false);
+        setIsVisible(true);
       } else if (window.scrollY < lastScrollY) {
         setIsVisible(true);
       }
@@ -156,26 +153,26 @@ const Navbar = () => {
                     onClick={() => navigate('my-profile')}
                     className="hover:text-black cursor-pointer"
                   >
-                    <i class="fa-regular fa-user mr-3"></i>
+                    <i className="fa-regular fa-user mr-3"></i>
                     Hồ sơ của tôi
                   </p>
                   <p
                     onClick={() => navigate('my-appointments')}
                     className="hover:text-black cursor-pointer"
                   >
-                    {/* <i class="fa-solid fa-calendar-plus mr-3"></i> */}
-                    <i class="fa-regular fa-calendar-check 3 mr-3"></i>
+
+                    <i className="fa-regular fa-calendar-check 3 mr-3"></i>
                     Lịch hẹn của tôi
                   </p>
                   <p
                     onClick={() => navigate('medical-history')}
                     className="hover:text-black cursor-pointer -ml-0.5"
                   >
-                    <i class="fa-solid fa-laptop-medical mr-2"></i>
+                    <i className="fa-solid fa-laptop-medical mr-2"></i>
                     Lịch sử khám bệnh
                   </p>
                   <p onClick={handleLogout} className="hover:text-black cursor-pointer">
-                    <i class="fa-solid fa-arrow-right-from-bracket mr-3"></i>
+                    <i className="fa-solid fa-arrow-right-from-bracket mr-3"></i>
                     Đăng xuất
                   </p>
                 </div>
@@ -215,10 +212,9 @@ const Navbar = () => {
 
         <div
           className={`transition-all duration-500 ${showMenu
-              ? "fixed w-full top-0 right-0 bottom-0 z-20 bg-white"
-              : "h-0 w-0 overflow-hidden"
-            }`}
-        >
+            ? "fixed w-full top-0 right-0 bottom-0 z-20 bg-white"
+            : "h-0 w-0 overflow-hidden"
+            }`}>
           <div className="flex items-center justify-between px-5 py-6">
             <img className="w-20" src={assets.logo} alt="Logo" />
             <img
@@ -241,9 +237,6 @@ const Navbar = () => {
             </NavLink>
             <NavLink onClick={() => setShowMenu(false)} to="/contact">
               <p className="px-4 py-2 rounded inline-block">Liên hệ</p>
-            </NavLink>
-            <NavLink onClick={() => setShowMenu(false)} to="/all-schedule">
-              <p className="px-4 py-2 rounded inline-block">Lịch làm việc</p>
             </NavLink>
             {!user && (
               <NavLink onClick={() => setShowMenu(false)} to="/account">

@@ -421,6 +421,34 @@ const resetPassword = async (req, res) => {
   }
 };
 
+const contact = async (req, res) => {
+  try {
+    const { name, email, message } = req.body;
+
+    if (!name || !email || !message) {
+      return res
+        .status(400)
+        .send({ message: "Vui lòng điền đầy đủ thông tin." });
+    }
+
+    const mailOptions = {
+      from: email,
+      to: EMAIL_USER,
+      subject: `Tin nhắn từ ${name}`,
+      text: message,
+    };
+    await transporter.sendMail(mailOptions);
+
+    return res
+      .status(200)
+      .send({ success: true, message: "Email đã được gửi thành công!" });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error." });
+  }
+};
+
 module.exports = {
   register,   
   login,
@@ -431,5 +459,6 @@ module.exports = {
   getAllScheduleDoctor,
   googleLogin,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  contact
 };
