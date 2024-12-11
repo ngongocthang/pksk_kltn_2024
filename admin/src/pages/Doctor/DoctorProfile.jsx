@@ -36,62 +36,6 @@ const DoctorProfile = () => {
     setPreviewImage(URL.createObjectURL(file));
   };
 
-  // Update profile information
-  // const updateProfile = async () => {
-  //   try {
-  //     setLoading(true);
-  //     const doctorInfo = JSON.parse(sessionStorage.getItem("doctorInfo"));
-  //     const doctorId = doctorInfo ? doctorInfo.id : null;
-  //     const updatedData = new FormData();
-
-  //     // Thêm tất cả các trường vào FormData
-  //     updatedData.append("name", formData.name || "");
-  //     updatedData.append("email", formData.email || "");
-  //     updatedData.append("phone", formData.phone || "");
-  //     updatedData.append("description", formData.description || "");
-
-  //     // Gửi giá trị price mà không cần loại bỏ dấu chấm
-  //     updatedData.append("price", formData.price || "0");
-  //     updatedData.append("available", formData.available ? "true" : "false");
-
-  //     // Chỉ thêm hình ảnh nếu có
-  //     if (selectedImage) {
-  //       updatedData.append("image", selectedImage);
-  //     }
-  //     if (selectedImage) {
-  //       updatedData.append("image", selectedImage);
-  //     }
-
-  //     // Chỉ thêm mật khẩu nếu có
-  //     if (newPassword) {
-  //       updatedData.append("oldPassword", oldPassword || "");
-  //       updatedData.append("newPassword", newPassword);
-  //     }
-
-  //     const { data } = await axios.put(
-  //       `${backendUrl}/doctor/update-profile/${doctorId}`,
-  //       updatedData,
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${dToken}`,
-  //           "Content-Type": "multipart/form-data",
-  //         },
-  //       }
-  //     );
-
-  //     if (data.success) {
-  //       toast.success(data.message);
-  //       setIsEdit(false);
-  //       getProfileData();
-  //     } else {
-  //       toast.error(data.message);
-  //     }
-  //   } catch (error) {
-  //     toast.error(error.response ? error.response.data.message : "Đã xảy ra lỗi!");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
   const updateProfile = async () => {
     try {
       setLoading(true);
@@ -179,7 +123,7 @@ const DoctorProfile = () => {
 
   return (
     profileData && (
-      <div className="w-full max-w-4xl mx-auto p-5 bg-gray-50 shadow-md rounded-md mt-8">
+      <div className="w-full max-w-4xl mx-auto p-5 bg-gray-50 shadow-md rounded-md mt-8 h-[450px]">
         <div className="flex flex-col sm:flex-row gap-5 mb-6">
           {/* Left section: Image, Name, and Specialization */}
           <div className="flex flex-col items-center sm:items-start gap-4 sm:w-1/3">
