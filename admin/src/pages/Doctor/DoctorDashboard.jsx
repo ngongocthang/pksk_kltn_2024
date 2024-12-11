@@ -182,8 +182,8 @@ const DoctorDashboard = () => {
     },
     layout: {
       padding: {
-        top: 80,
-        bottom: 80,
+        top: 30,
+        bottom: 10,
         left: 10,
         right: 10,
       },
@@ -259,7 +259,7 @@ const DoctorDashboard = () => {
       {/* Appointment Statistics Chart */}
       <div className="mt-5 flex justify-center">
         <div
-          className="bg-white p-4 rounded-lg border-2 border-gray-100 cursor-pointer transition-all duration-300 flex items-center justify-center shadow-lg w-full h-full"
+          className="bg-white p-4 border-2 border-gray-100 cursor-pointer transition-all duration-300 flex items-center justify-center w-full h-full"
         >
           <Bar data={chartData} options={chartOptions} style={{ width: "70%", height: "500px" }} />
         </div>
@@ -268,7 +268,7 @@ const DoctorDashboard = () => {
       {/* Appointment List Section */}
       <div className="flex gap-4 bg-white mt-5 mb-4 px-2">
         {/* Latest Bookings */}
-        <div className="flex-1 bg-white p-4 rounded-lg shadow-md">
+        <div className="flex-1 bg-white p-4 rounded-lg shadow-md hidden sm:block">
           {/* Tiêu đề */}
           <div className="flex items-center gap-3 px-4 py-2 bg-blue-100 rounded-t">
             <img src={assets.list_icon} alt="list-icon" className="w-6 h-6" />
@@ -334,7 +334,7 @@ const DoctorDashboard = () => {
         </div>
 
         {/* Status Bookings */}
-        <div className="flex-1 bg-white p-4 rounded-lg shadow-md">
+        <div className="flex-1 bg-white p-4 rounded-lg shadow-md hidden sm:block">
           {/* Tiêu đề */}
           <div className="flex items-center gap-3 px-4 py-2 bg-blue-100 rounded-t">
             <img src={assets.list_icon} alt="list-icon" className="w-6 h-6" />
@@ -399,6 +399,100 @@ const DoctorDashboard = () => {
               </table>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Giao diện mobile */}
+      <div className="sm:hidden overflow-y-auto max-h-screen mb-4">
+        {/* Tiêu đề cho giao diện mobile */}
+        <div className="px-4 py-2 bg-blue-100 rounded-t sticky top-0 z-10 flex items-center justify-center">
+          <img src={assets.list_icon} alt="list-icon" className="w-6 h-6 mr-2" />
+          <h2 className="font-semibold text-gray-800 text-lg text-center">Lịch hẹn sắp tới</h2>
+        </div>
+
+        <div className="max-h-80 overflow-y-auto"> {/* Thêm div chứa cho phần cuộn */}
+          {appointments.map((item, index) => (
+            <div key={item._id} className="border-b py-3 sm:px-6 pl-4">
+              {/* Số thứ tự */}
+              <div className="block text-center text-sm font-bold mb-2">
+                <p>{index + 1}</p>
+              </div>
+
+              {/* Bệnh nhân */}
+              <div className="text-base font-semibold mb-2">
+                <span className="font-semibold">Bệnh nhân: </span>{item.patient_name}
+              </div>
+
+              {/* Ngày khám */}
+              <div className="text-sm font-semibold text-gray-700 mb-2">
+                <span className="font-semibold">Ngày khám: </span>
+                {new Date(item.work_date).toLocaleDateString("vi-VN")}
+              </div>
+
+              {/* Ca khám */}
+              <div className="text-sm font-semibold text-gray-700 mb-2">
+                <span className="font-semibold">Ca khám: </span>
+                {item.work_shift === "morning" ? "Sáng" : "Chiều"}
+              </div>
+
+              {/* Trạng thái */}
+              <div className="text-sm font-semibold text-gray-700">
+                <span className="font-semibold">Trạng thái: </span>
+                {item.status === "canceled" ? (
+                  <span className="bg-red-500 text-white py-1 px-2 rounded-full">Đã từ chối</span>
+                ) : (
+                  <span className="bg-green-500 text-white py-1 px-2 rounded-full">Đã xác nhận</span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Giao diện mobile cho Status Bookings */}
+      <div className="overflow-y-auto max-h-screen mb-4 sm:hidden mt-12"> {/* Chỉ hiển thị trên giao diện mobile */}
+        {/* Tiêu đề cho giao diện mobile */}
+        <div className="px-4 py-2 bg-blue-100 rounded-t sticky top-0 z-10 flex items-center justify-center">
+          <img src={assets.list_icon} alt="list-icon" className="w-6 h-6 mr-2" />
+          <h2 className="font-semibold text-gray-800 text-lg text-center">Lịch hẹn đã xác nhận & hoàn thành</h2>
+        </div>
+
+        <div className="max-h-80 overflow-y-auto"> {/* Thêm div chứa cho phần cuộn */}
+          {appointmentStatus.map((item, index) => (
+            <div key={item._id} className="border-b py-3 sm:px-6 pl-4">
+              {/* Số thứ tự */}
+              <div className="block text-center text-sm font-bold mb-2">
+                <p>{index + 1}</p>
+              </div>
+
+              {/* Bệnh nhân */}
+              <div className="text-base font-semibold mb-2">
+                <span className="font-semibold">Bệnh nhân: </span>{item.patient_name}
+              </div>
+
+              {/* Ngày khám */}
+              <div className="text-sm font-semibold text-gray-700 mb-2">
+                <span className="font-semibold">Ngày khám: </span>
+                {new Date(item.work_date).toLocaleDateString("vi-VN")}
+              </div>
+
+              {/* Ca khám */}
+              <div className="text-sm font-semibold text-gray-700 mb-2">
+                <span className="font-semibold">Ca khám: </span>
+                {item.work_shift === "morning" ? "Sáng" : "Chiều"}
+              </div>
+
+              {/* Trạng thái */}
+              <div className="text-sm font-semibold text-gray-700">
+                <span className="font-semibold">Trạng thái: </span>
+                {item.status === "canceled" ? (
+                  <span className="bg-red-500 text-white py-1 px-2 rounded-full">Đã từ chối</span>
+                ) : (
+                  <span className="bg-green-500 text-white py-1 px-2 rounded-full">Đã xác nhận</span>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
