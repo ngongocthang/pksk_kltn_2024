@@ -3,20 +3,22 @@ const router = express.Router();
 const userMiddleware = require("../middlewares/index");
 
 const {
-  findAllAppointment,
   findAppointment,
+  findAllAppointment,
   updateAppointment,
   deleteAppointment,
   getAllAppointmentAdmin,
-  deleteAppointmentByStatus
+  deleteAppointmentByStatus,
+  adminUpdateAppointment
 } = require("../controllers/AppointmentController/index");
 
 // Định nghĩa route
 router.get("/find-all", findAllAppointment);
-router.get("/find/:id", findAppointment);
 router.put("/update/:id", userMiddleware, updateAppointment);
 router.delete("/delete/:id", deleteAppointment);
 router.get("/get-all-admin", getAllAppointmentAdmin);
 router.delete("/delete-by-status/:id", deleteAppointmentByStatus);
+router.get("/find/:id", findAppointment);
+router.put("/admin-update/:id", adminUpdateAppointment);
 
 module.exports = router;
