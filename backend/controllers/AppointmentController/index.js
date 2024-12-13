@@ -216,7 +216,7 @@ const patientCreateAppointment = async (req, res) => {
       return res.status(400).json({ message: "Bạn đã đặt lịch hẹn này rồi!" });
     }
 
-    // // Kiểm tra nếu đã hủy 2 lần trước đó
+    // Kiểm tra nếu đã hủy 2 lần trước đó
     const canceledCount = await Appointment.countDocuments({
       patient_id: patient._id,
       work_date: req.body.work_date,

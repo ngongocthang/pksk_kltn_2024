@@ -48,7 +48,7 @@ const AppointmentDetails = () => {
       } catch (error) {
         toast.error(
           error.response?.data.message ||
-          "Đã xảy ra lỗi khi lấy danh sách bác sĩ!"
+            "Đã xảy ra lỗi khi lấy danh sách bác sĩ!"
         );
       }
     };
@@ -63,7 +63,6 @@ const AppointmentDetails = () => {
         try {
           const doctor = doctors.find((doc) => doc._id === selectedDoctorId);
           if (doctor) {
-            // Lọc lịch làm việc chỉ hiển thị những ngày và ca khám sau giờ hiện tại
             const currentDateTime = new Date();
             const filteredSchedules = doctor.schedules.filter((schedule) => {
               const scheduleDate = new Date(schedule.work_date);
@@ -73,12 +72,16 @@ const AppointmentDetails = () => {
               const afternoonShiftStart = new Date(scheduleDate);
               afternoonShiftStart.setHours(13, 30); // 13h30
 
-              return scheduleDate > currentDateTime ||
-                (schedule.work_shift === "morning" && morningShiftStart > currentDateTime) ||
-                (schedule.work_shift === "afternoon" && afternoonShiftStart > currentDateTime);
+              return (
+                scheduleDate > currentDateTime ||
+                (schedule.work_shift === "morning" &&
+                  morningShiftStart > currentDateTime) ||
+                (schedule.work_shift === "afternoon" &&
+                  afternoonShiftStart > currentDateTime)
+              );
             });
 
-            setDoctorSchedules(filteredSchedules); // Lưu lịch làm việc đã lọc
+            setDoctorSchedules(filteredSchedules);
           }
         } catch (error) {
           toast.error("Đã xảy ra lỗi khi lấy lịch làm việc của bác sĩ!");
@@ -142,12 +145,12 @@ const AppointmentDetails = () => {
   };
 
   if (loading) {
-    return <div>Loading...</div>; // Hiển thị loading khi đang lấy dữ liệu
+    return <div className="items-center">Loading...</div>;
   }
 
   if (!appointment) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen">
+      <div className="flex flex-col items-center justify-center h-scree w-full">
         <div className="flex flex-col items-center">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -167,7 +170,7 @@ const AppointmentDetails = () => {
         </div>
       </div>
     ); // Nếu không có thông tin
-  }  
+  }
 
   return (
     <form className="m-5 w-full">
@@ -230,10 +233,10 @@ const AppointmentDetails = () => {
                   appointment.status === "canceled"
                     ? "Đã huỷ"
                     : appointment.status === "confirmed"
-                      ? "Đã xác nhận"
-                      : appointment.status === "pending"
-                        ? "Đang chờ xác nhận"
-                        : "Đã xác nhận"
+                    ? "Đã xác nhận"
+                    : appointment.status === "pending"
+                    ? "Đang chờ xác nhận"
+                    : "Đã xác nhận"
                 }
                 readOnly
               />
@@ -245,8 +248,14 @@ const AppointmentDetails = () => {
           <button
             type="button"
             onClick={handleUpdateAppointment}
-            className={`bg-blue-500 px-10 py-3 text-white rounded-full hover:bg-blue-600 ${isLoadingUpdate ? "opacity-50 cursor-not-allowed" : ""}`}
-            disabled={isLoadingUpdate} // Vô hiệu hóa nút khi đang loading
+            className={`bg-blue-500 px-10 py-3 text-white rounded-full hover:bg-blue-600 ${
+              isLoadingUpdate ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+            disabled={
+              isLoadingUpdate ||
+              !appointment.work_date ||
+              !appointment.work_shift
+            } // Vô hiệu hóa nút nếu không có lịch làm việc
           >
             {isLoadingUpdate ? (
               <div className="flex items-center justify-center">
@@ -256,6 +265,7 @@ const AppointmentDetails = () => {
               "Cập nhật"
             )}
           </button>
+
           <button
             type="button"
             onClick={onCancelHandler}
