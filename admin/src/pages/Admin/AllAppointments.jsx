@@ -1,7 +1,8 @@
+import axios from "axios";
 import React, { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import { AdminContext } from "../../context/AdminContext";
-import axios from "axios";
 
 const VITE_BACKEND_URI = import.meta.env.VITE_BACKEND_URI;
 
@@ -9,15 +10,16 @@ const AllAppointments = () => {
   const { aToken, appointments, getAllAppointments } = useContext(AdminContext);
   const [currentPage, setCurrentPage] = useState(1);
   const [appointmentsPerPage] = useState(10);
-  const [isLoading, setIsLoading] = useState(true); // Thêm state loading
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false); // Thêm state loading cho việc xoá
 
   const totalPages = Math.ceil(appointments.length / appointmentsPerPage);
   const navigate = useNavigate();
 
   useEffect(() => {
     if (aToken) {
-      setIsLoading(true); // Bắt đầu loading
-      getAllAppointments().finally(() => setIsLoading(false)); // Dừng loading khi dữ liệu đã có
+      setIsLoading(true);
+      getAllAppointments().finally(() => setIsLoading(false));
     }
   }, [aToken]);
 
@@ -39,30 +41,63 @@ const AllAppointments = () => {
     navigate(`/all-appointments?page=${pageNumber}`);
   };
 
-  const handleDeleteAppointment = async (id, patientId) => {
-    if (window.confirm("Bạn có chắc chắn muốn xoá cuộc hẹn này?")) {
-      try {
-        const response = await axios.delete(`${VITE_BACKEND_URI}/appointment/delete/${id}`, {
-          data: { user_id: patientId }, // Sử dụng patient_id
-        });
+  const handleDeleteAppointment = (id, patientId) => {
+    toast.dismiss();
+    toast(
+      ({ closeToast }) => (
+        <div>
+          <p className="mb-2 font-bold text-lg text-center">
+            Bạn có chắc chắn muốn xoá cuộc hẹn này không?
+          </p>
+          <div className="flex justify-end gap-4">
+            <button
+              className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-700"
+              onClick={async () => {
+                setIsDeleting(true); // Bắt đầu quá trình xoá
+                try {
+                  const response = await axios.delete(`${VITE_BACKEND_URI}/appointment/delete/${id}`, {
+                    data: { user_id: patientId },
+                  });
 
-        if (response.data.success) {
-          alert("Xoá cuộc hẹn thành công!");
-          getAllAppointments(); // Cập nhật lại danh sách cuộc hẹn
-        } else {
-          alert("Xoá cuộc hẹn thất bại!");
-        }
-      } catch (error) {
-        alert("Đã xảy ra lỗi khi xoá cuộc hẹn!");
+                  if (response.data.success) {
+                    toast.success("Xoá cuộc hẹn thành công!", { position: "top-right" });
+                    getAllAppointments(); // Cập nhật lại danh sách cuộc hẹn
+                    closeToast();
+                  } else {
+                    toast.error("Xoá cuộc hẹn thất bại!", { position: "top-right" });
+                  }
+                } catch (error) {
+                  toast.error("Đã xảy ra lỗi khi xoá cuộc hẹn!", { position: "top-right" });
+                } finally {
+                  setIsDeleting(false); // Kết thúc quá trình xoá
+                  closeToast();
+                }
+              }}
+            >
+              Xác nhận
+            </button>
+            <button
+              className="px-4 py-2 bg-gray-300 rounded-md hover:bg-gray-400"
+              onClick={closeToast}
+            >
+              Hủy bỏ
+            </button>
+          </div>
+        </div>
+      ),
+      {
+        position: "top-center",
+        autoClose: true,
+        closeOnClick: false,
+        draggable: false,
       }
-    }
+    );
   };
 
   // Hàm render phân trang
   const renderPagination = () => {
     const paginationItems = [];
 
-    // Nút "Trang trước"
     paginationItems.push(
       <button
         key="prev"
@@ -78,7 +113,6 @@ const AllAppointments = () => {
       </button>
     );
 
-    // Hiển thị trang 1
     paginationItems.push(
       <button
         key={1}
@@ -91,16 +125,10 @@ const AllAppointments = () => {
       </button>
     );
 
-    // Hiển thị dấu ba chấm nếu cần
     if (currentPage > 2) {
-      paginationItems.push(
-        <span key="start-dots" className="px-2">
-          ...
-        </span>
-      );
+      paginationItems.push(<span key="start-dots" className="px-2">...</span>);
     }
 
-    // Hiển thị các trang xung quanh trang hiện tại
     for (
       let i = Math.max(2, currentPage - 1);
       i <= Math.min(totalPages - 1, currentPage + 1);
@@ -119,16 +147,10 @@ const AllAppointments = () => {
       );
     }
 
-    // Hiển thị dấu ba chấm nếu cần
     if (currentPage < totalPages - 1) {
-      paginationItems.push(
-        <span key="end-dots" className="px-2">
-          ...
-        </span>
-      );
+      paginationItems.push(<span key="end-dots" className="px-2">...</span>);
     }
 
-    // Hiển thị trang cuối
     if (totalPages > 1) {
       paginationItems.push(
         <button
@@ -145,7 +167,6 @@ const AllAppointments = () => {
       );
     }
 
-    // Nút "Trang tiếp theo"
     paginationItems.push(
       <button
         key="next"
@@ -168,6 +189,11 @@ const AllAppointments = () => {
 
   return (
     <div className="w-full max-w-6xl m-4">
+      {isDeleting && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-50">
+          <div className="animate-spin border-t-4 border-blue-600 border-solid rounded-full w-16 h-16" />
+        </div>
+      )}
       <p className="mb-3 text-lg font-medium">Tất cả các cuộc hẹn</p>
       <div className="bg-white border rounded-2xl text-sm max-h-[90vh] min-h-[60vh] overflow-y-scroll">
         {/* Table header */}
