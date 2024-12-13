@@ -209,7 +209,7 @@ const AppointmentDetails = () => {
               <p className="font-bold">Ngày - Ca khám:</p>
               <select
                 className="border rounded px-3 py-2"
-                value={appointment.work_date}
+                value={appointment.work_date || ""}
                 onChange={handleScheduleChange}
               >
                 <option value="">Chọn ngày khám</option>
