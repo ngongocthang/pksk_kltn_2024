@@ -65,7 +65,6 @@ const findSpecialization = async (req, res) => {
   }
 };
 
-
 const updateSpecialization = async (req, res) => {
   try {
     // Validate các trường không phải file
