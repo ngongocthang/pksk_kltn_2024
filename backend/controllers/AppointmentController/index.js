@@ -79,7 +79,7 @@ const updateAppointment = async (req, res) => {
 
     const oldDate = moment(appointment.work_date)
       .tz("Asia/Ho_Chi_Minh")
-      .format("dddd, MMMM DD YYYY");
+      .format("dddd, DD MMMM YYYY");
 
     const oldShift = appointment.work_shift === "morning" ? "Sáng" : "Chiều";
 
@@ -128,7 +128,7 @@ const updateAppointment = async (req, res) => {
     await Notification.create({
       patient_id: appointmentUpdate.patient_id,
       doctor_id: appointmentUpdate.doctor_id,
-      content: `Thông báo lịch hẹn ${oldDate}-${oldShift} của bạn đã thay đổi: \nNgày khám mới: ${newDate}. \n Ca khám mới: ${newShift}.\n Thời gian diễn ra: ${time}`,
+      content: `Thông báo lịch hẹn ${oldDate}- Ca: ${oldShift} của bạn đã thay đổi: \nNgày khám mới: ${newDate}. \n Ca khám mới: ${newShift}.\n Thời gian diễn ra: ${time}`,
       appointment_id: appointmentUpdate._id,
       recipientType: "patient",
     });
@@ -841,7 +841,7 @@ const adminUpdateAppointment = async (req, res) => {
 
     const newDate = moment(appointmentUpdate.work_date)
       .tz("Asia/Ho_Chi_Minh")
-      .format("dddd, MMMM DD YYYY");
+      .format("dddd, DD MMMM YYYY");
 
     const newShift =
       appointmentUpdate.work_shift === "morning" ? "Sáng" : "Chiều";
@@ -851,7 +851,7 @@ const adminUpdateAppointment = async (req, res) => {
     await Notification.create({
       patient_id: appointmentUpdate.patient_id,
       doctor_id: appointmentUpdate.doctor_id,
-      content: `Thông báo lịch hẹn ${oldDate}-${oldShift} của bạn đã thay đổi: \nNgày khám mới: ${newDate}. \n Ca khám mới: ${newShift}.\n Thời gian diễn ra: ${time}`,
+      content: `Thông báo lịch hẹn ${oldDate}- Ca: ${oldShift} của bạn đã thay đổi: \nNgày khám mới: ${newDate}. \n Ca khám mới: ${newShift}.\n Thời gian diễn ra: ${time}`,
       appointment_id: appointmentUpdate._id,
       recipientType: "patient",
     });
