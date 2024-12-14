@@ -31,7 +31,7 @@ const AdminContextProvider = ({ children }) => {
         toast.error(data.message);
         setDoctors(data.doctors);
       } else {
-        toast.error(data.message);
+        console.log(data.message);
       }
     } catch (error) {
       toast.error(error.response?.data?.message || error.message);
@@ -102,7 +102,7 @@ const AdminContextProvider = ({ children }) => {
       if (data.success) {
         setPatients(data.data);
       } else {
-        toast.error(data.message);
+        console.log(data.message);
       }
     } catch (error) {
       console.error("Error fetching patients:", error);
@@ -115,7 +115,7 @@ const AdminContextProvider = ({ children }) => {
       if (data.success) {
         setCountPatients(data.data);
       } else {
-        toast.error(data.message);
+        console.log(data.message);
       }
     } catch (error) {
       console.error("Error fetching patients:", error);
