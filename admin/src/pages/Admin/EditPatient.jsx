@@ -1,301 +1,150 @@
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import "../../index.css";
+import { AdminContext } from "../../context/AdminContext";
 
-const VITE_BACKEND_URI = import.meta.env.VITE_BACKEND_URI;
+const EditPatient = () => {
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
 
-const AppointmentDetails = () => {
-  const { id } = useParams(); // Lấy ID từ params
-  const [appointment, setAppointment] = useState(null);
-  const [doctors, setDoctors] = useState([]);
-  const [selectedDoctorId, setSelectedDoctorId] = useState(null);
-  const [doctorSchedules, setDoctorSchedules] = useState([]); // Lịch làm việc của bác sĩ đã chọn
-  const [loading, setLoading] = useState(true);
-  const [isLoadingUpdate, setIsLoadingUpdate] = useState(false); // Thêm state cho loading
+  const { backendUrl, aToken } = useContext(AdminContext);
   const navigate = useNavigate();
+  const { id } = useParams(); // Lấy ID từ URL
 
   useEffect(() => {
-    const fetchAppointment = async () => {
+    const fetchPatientData = async () => {
       try {
         const response = await axios.get(
-          `${VITE_BACKEND_URI}/appointment/find/${id}`
-        );
-        if (response.data.success) {
-          setAppointment(response.data.data);
-          setSelectedDoctorId(response.data.data.doctor_id); // Lưu ID bác sĩ mặc định
-        } else {
-          toast.error("Không tìm thấy thông tin cuộc hẹn!");
-        }
-      } catch (error) {
-        toast.error(
-          error.response?.data.message || "Đã xảy ra lỗi khi lấy thông tin!"
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchDoctors = async () => {
-      try {
-        const response = await axios.get(`${VITE_BACKEND_URI}/doctor/find-all`);
-        if (response.data.success) {
-          setDoctors(response.data.doctors);
-        } else {
-          toast.error("Không tìm thấy danh sách bác sĩ!");
-        }
-      } catch (error) {
-        toast.error(
-          error.response?.data.message ||
-            "Đã xảy ra lỗi khi lấy danh sách bác sĩ!"
-        );
-      }
-    };
-
-    fetchAppointment();
-    fetchDoctors();
-  }, [id]);
-
-  useEffect(() => {
-    const fetchDoctorSchedules = async () => {
-      if (selectedDoctorId) {
-        try {
-          const doctor = doctors.find((doc) => doc._id === selectedDoctorId);
-          if (doctor) {
-            const currentDateTime = new Date();
-            const filteredSchedules = doctor.schedules.filter((schedule) => {
-              const scheduleDate = new Date(schedule.work_date);
-              const morningShiftStart = new Date(scheduleDate);
-              morningShiftStart.setHours(7, 30); // 7h30
-
-              const afternoonShiftStart = new Date(scheduleDate);
-              afternoonShiftStart.setHours(13, 30); // 13h30
-
-              return (
-                scheduleDate > currentDateTime ||
-                (schedule.work_shift === "morning" &&
-                  morningShiftStart > currentDateTime) ||
-                (schedule.work_shift === "afternoon" &&
-                  afternoonShiftStart > currentDateTime)
-              );
-            });
-
-            setDoctorSchedules(filteredSchedules);
-
-            // Nếu không có lịch làm việc, xóa thông tin lịch làm việc
-            if (filteredSchedules.length === 0) {
-              setAppointment((prev) => ({
-                ...prev,
-                work_date: "",
-                work_shift: "",
-              }));
-            }
+          `${backendUrl}/patient/get-patient-dashboard/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${aToken}`,
+            },
           }
-        } catch (error) {
-          toast.error("Đã xảy ra lỗi khi lấy lịch làm việc của bác sĩ!");
+        );
+        const patientData = response.data;
+
+        if (patientData.success && patientData.patient) {
+          const user = patientData.patient.user_id;
+          setName(user.name);
+          setPhone(user.phone);
+          setEmail(user.email);
+        } else {
+          throw new Error("Dữ liệu bệnh nhân không hợp lệ.");
         }
+      } catch (error) {
+        console.error("Lỗi khi lấy thông tin bệnh nhân:", error);
+        toast.error("Có lỗi xảy ra khi lấy thông tin bệnh nhân.");
       }
     };
 
-    fetchDoctorSchedules();
-  }, [selectedDoctorId, doctors]);
+    fetchPatientData();
+  }, [id, backendUrl, aToken]);
 
-  const onCancelHandler = () => {
-    navigate("/all-appointments"); // Điều hướng về danh sách cuộc hẹn
-  };
+  const onSubmitHandler = async (event) => {
+    event.preventDefault();
+    setLoading(true); // Bắt đầu trạng thái loading
 
-  const handleDoctorChange = (event) => {
-    const newDoctorId = event.target.value; // Lưu ID bác sĩ mới
-    setSelectedDoctorId(newDoctorId); // Cập nhật bác sĩ được chọn
-
-    // Xóa lịch làm việc cũ khi bác sĩ thay đổi
-    setAppointment((prev) => ({
-      ...prev,
-      work_date: "",
-      work_shift: "",
-    }));
-  };
-
-  const handleScheduleChange = (event) => {
-    const selectedSchedule = doctorSchedules.find(
-      (schedule) => schedule.work_date === event.target.value
-    );
-    if (selectedSchedule) {
-      setAppointment((prev) => ({
-        ...prev,
-        work_date: selectedSchedule.work_date,
-        work_shift: selectedSchedule.work_shift,
-      }));
-    } else {
-      // Nếu không chọn lịch nào, xóa thông tin lịch làm việc
-      setAppointment((prev) => ({
-        ...prev,
-        work_date: "",
-        work_shift: "",
-      }));
-    }
-  };
-
-  const handleUpdateAppointment = async () => {
-    setIsLoadingUpdate(true); // Bắt đầu loading
     try {
-      const updatedData = {
-        work_date: appointment.work_date,
-        work_shift: appointment.work_shift,
-        doctor_id: selectedDoctorId,
-        patient_id: appointment.patient_id, // Giả định bạn đã lưu patient_id trong appointment
-        status: appointment.status,
+      const data = {
+        name,
+        phone,
+        email,
       };
 
       const response = await axios.put(
-        `${VITE_BACKEND_URI}/appointment/admin-update/${id}`,
-        updatedData
+        `${backendUrl}/patient/update/${id}`, // Thêm ID vào URL
+        data, // Gửi dữ liệu dưới dạng JSON
+        {
+          headers: {
+            Authorization: `Bearer ${aToken}`,
+            "Content-Type": "application/json", // Đảm bảo là application/json
+          },
+        }
       );
 
       if (response.data.success) {
-        toast.success("Cập nhật cuộc hẹn thành công!");
-        navigate("/all-appointments");
+        // Điều hướng về danh sách bệnh nhân với thông báo thành công
+        navigate("/patient-list", { state: { successMessage: "Chỉnh sửa bệnh nhân thành công!" } });
       } else {
-        toast.error("Cập nhật cuộc hẹn thất bại!");
+        toast.error("Chỉnh sửa bệnh nhân thất bại!");
       }
     } catch (error) {
-      toast.error(
-        error.response?.data.message || "Đã xảy ra lỗi khi cập nhật!"
-      );
+      toast.error(error.response?.data.message || "Có lỗi xảy ra.");
     } finally {
-      setIsLoadingUpdate(false); // Kết thúc loading
+      setLoading(false); // Kết thúc trạng thái loading
     }
   };
 
-  if (loading) {
-    return <div className="items-center">Loading...</div>;
-  }
-
-  if (!appointment) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen w-full">
-        <div className="flex flex-col items-center">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-20 w-20 text-gray-500 mb-4"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path
-              fillRule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-13a1 1 0 112 0v2a1 1 0 11-2 0V5zm0 4a1 1 0 112 0v4a1 1 0 11-2 0V9z"
-              clipRule="evenodd"
-            />
-          </svg>
-          <p className="text-lg font-semibold text-gray-700">
-            Không có thông tin cuộc hẹn.
-          </p>
-        </div>
-      </div>
-    ); // Nếu không có thông tin
-  }
+  const onCancelHandler = () => {
+    navigate("/patient-list");
+  };
 
   return (
-    <form className="m-5 w-full">
-      <div className="flex justify-between items-center mb-4">
-        <p className="md:text-3xl text-xl font-bold text-[#0091a1]">
-          Thông tin cuộc hẹn
-        </p>
-      </div>
-      <div className="overflow-x-auto bg-white p-4 rounded-md shadow-md">
-        <div className="flex flex-col lg:flex-row items-start gap-10 text-gray-500">
-          <div className="w-full lg:flex-1 flex flex-col gap-4">
+    <form onSubmit={onSubmitHandler} className="m-5 w-full">
+      <p className="mb-3 text-lg font-medium">Chỉnh sửa thông tin bệnh nhân</p>
+      <div className="bg-white px-8 py-8 border rounded w-full max-w-7xl max-h-[80vh] overflow-y-scroll">
+        <div className="flex flex-row items-start gap-10 text-gray-500">
+          <div className="flex-1 flex flex-col gap-4">
             <div className="flex-1 flex flex-col gap-1">
-              <p className="font-bold">Bác sĩ:</p>
-              <select
-                className="border rounded px-3 py-2 text-black"
-                value={selectedDoctorId}
-                onChange={handleDoctorChange}
-              >
-                {doctors.map((doctor) => (
-                  <option key={doctor._id} value={doctor._id}>
-                    {doctor.user_id.name} ({doctor.specialization_id.name})
-                  </option>
-                ))}
-              </select>
+              <p className="font-bold">Tên:</p>
+              <input
+                onChange={(e) => setName(e.target.value)}
+                value={name}
+                className="border rounded px-3 py-2 w-full"
+                type="text"
+                placeholder="Tên"
+              />
             </div>
             <div className="flex-1 flex flex-col gap-1">
-              <p className="font-bold">Bệnh nhân:</p>
+              <p className="font-bold">Số điện thoại:</p>
               <input
-                className="border rounded px-3 py-2"
-                type="text"
-                value={appointment.patient_name}
-                readOnly
+                onChange={(e) => setPhone(e.target.value)}
+                value={phone}
+                className="border rounded px-3 py-2 w-full"
+                type="tel"
+                placeholder="Số điện thoại"
               />
             </div>
           </div>
 
-          <div className="w-full lg:flex-1 flex flex-col gap-4">
+          <div className="flex-1 flex flex-col gap-4">
             <div className="flex-1 flex flex-col gap-1">
-              <p className="font-bold">Ngày - Ca khám:</p>
-              <select
-                className="border rounded px-3 py-2"
-                value={appointment.work_date || ""}
-                onChange={handleScheduleChange}
-              >
-                <option value="">Chọn ngày khám</option>
-                {doctorSchedules.map((schedule) => (
-                  <option key={schedule.work_date} value={schedule.work_date}>
-                    {new Date(schedule.work_date).toLocaleDateString()} -{" "}
-                    {schedule.work_shift === "morning" ? "Sáng" : "Chiều"}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex-1 flex flex-col gap-1">
-              <p className="font-bold">Trạng thái:</p>
+              <p className="font-bold">Email:</p>
               <input
-                className="border rounded px-3 py-2"
-                type="text"
-                value={
-                  appointment.status === "canceled"
-                    ? "Đã huỷ"
-                    : appointment.status === "confirmed"
-                    ? "Đã xác nhận"
-                    : appointment.status === "pending"
-                    ? "Đang chờ xác nhận"
-                    : "Đã xác nhận"
-                }
-                readOnly
+                onChange={(e) => setEmail(e.target.value)}
+                value={email}
+                className="border rounded px-3 py-2 w-full"
+                type="email"
+                placeholder="Email"
               />
             </div>
           </div>
         </div>
 
-        <div className="flex gap-4 mt-4">
+        <div className="flex gap-4 mt-4 justify-start">
           <button
-            type="button"
-            onClick={handleUpdateAppointment}
-            className={`bg-blue-500 px-10 py-3 text-white rounded-full hover:bg-blue-600 ${
-              isLoadingUpdate ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-            disabled={
-              isLoadingUpdate ||
-              !appointment.work_date ||
-              !appointment.work_shift
-            } // Vô hiệu hóa nút nếu không có lịch làm việc
+            type="submit"
+            className={`bg-primary px-10 py-3 text-white rounded-full ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+            disabled={loading}
           >
-            {isLoadingUpdate ? (
+            {loading ? (
               <div className="flex items-center justify-center">
                 <div className="w-5 h-5 border-t-2 border-white border-solid rounded-full animate-spin"></div>
               </div>
             ) : (
-              "Cập nhật"
+              "Lưu"
             )}
           </button>
-
           <button
             type="button"
             onClick={onCancelHandler}
-            className="bg-gray-300 px-10 py-3 text-black rounded-full hover:bg-gray-400"
+            className="bg-gray-300 px-10 py-3 text-black rounded-full"
           >
-            Quay lại
+            Hủy
           </button>
         </div>
       </div>
@@ -303,4 +152,4 @@ const AppointmentDetails = () => {
   );
 };
 
-export default AppointmentDetails;
+export default EditPatient;
