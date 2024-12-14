@@ -245,34 +245,27 @@ const patientCreateAppointment = async (req, res) => {
 
     // Xác định thời gian buổi sáng và buổi chiều
     const appointmentDate = new Date(req.body.work_date);
-
-    const morningTime = new Date(appointmentDate);
-    morningTime.setUTCHours(7, 30, 0, 0); // 7h30 sáng (UTC)
-
-    const afternoonTime = new Date(appointmentDate);
-    afternoonTime.setUTCHours(13, 30, 0, 0); // 1h30 chiều (UTC)
-
+    
     // Thời gian hiện tại (UTC)
     const currentTime = new Date();
 
-    // Kiểm tra nếu là buổi sáng
-    if (appointmentDate >= morningTime && appointmentDate < afternoonTime) {
-      // Loại bỏ điều kiện kiểm tra 30 phút
-      if (currentTime > morningTime) {
+    // Kiểm tra ca làm việc
+    if (req.body.work_shift === "morning") {
+      const morningDeadline = new Date(appointmentDate);
+      morningDeadline.setUTCHours(7, 30, 0, 0); // 7h30 sáng (UTC)
+
+      if (currentTime > morningDeadline) {
         return res.status(400).json({
-          message:
-            "Bạn chỉ có thể đặt lịch hẹn cho buổi sáng trước giờ diễn ra!",
+          message: "Bạn chỉ có thể đặt lịch hẹn cho buổi sáng trước 7h30!",
         });
       }
-    }
+    } else if (req.body.work_shift === "afternoon") {
+      const afternoonDeadline = new Date(appointmentDate);
+      afternoonDeadline.setUTCHours(13, 30, 0, 0); // 1h30 chiều (UTC)
 
-    // Kiểm tra nếu là buổi chiều
-    if (appointmentDate >= afternoonTime) {
-      // Loại bỏ điều kiện kiểm tra 30 phút
-      if (currentTime > afternoonTime) {
+      if (currentTime > afternoonDeadline) {
         return res.status(400).json({
-          message:
-            "Bạn chỉ có thể đặt lịch hẹn cho buổi chiều trước giờ diễn ra!",
+          message: "Bạn chỉ có thể đặt lịch hẹn cho buổi chiều trước 13h30!",
         });
       }
     }
