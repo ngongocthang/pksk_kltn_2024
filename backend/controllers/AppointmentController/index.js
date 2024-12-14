@@ -10,6 +10,7 @@ const moment = require("moment-timezone");
 require("moment/locale/vi");
 const User_role = require("../../models/User_role");
 const Role = require("../../models/Role");
+const Payment = require("../../models/Payment");
 
 const findAllAppointment = async (req, res) => {
   try {
@@ -707,6 +708,7 @@ const deleteAppointmentByStatus = async (req, res) => {
     }
     await Appointment.findByIdAndDelete(id);
     await Appointment_history.deleteMany({ appointment_id: id });
+    await Payment.deleteMany({ appointment_id: id });
     return res
       .status(200)
       .json({ success: true, message: "Delete appointment success!" });
