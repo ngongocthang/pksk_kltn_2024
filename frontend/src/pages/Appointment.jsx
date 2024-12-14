@@ -26,7 +26,6 @@ const Appointment = () => {
   const [loading, setLoading] = useState(true);
   const [errorLoadingSchedule, setErrorLoadingSchedule] = useState(false);
   const [isBookingDisabled, setIsBookingDisabled] = useState(false);
-  const [isLoadingBooking, setIsLoadingBooking] = useState(false); // Thêm state cho loading
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
   const fetchDocInfo = async () => {
@@ -38,6 +37,10 @@ const Appointment = () => {
       toast.error("Không thể lấy thông tin bác sĩ.");
     }
   };
+
+  useEffect(() => {
+    setSlotTime(""); // Reset lại slotTime khi ngày được chọn thay đổi
+  }, [selectedDate]);
 
   const fetchDoctorSchedule = async () => {
     try {
@@ -72,18 +75,15 @@ const Appointment = () => {
 
   const handleBooking = () => {
     setIsBookingDisabled(true);
-    setIsLoadingBooking(true); // Bắt đầu loading
-
     const loggedInUser = user || JSON.parse(localStorage.getItem("user"));
     if (!loggedInUser) {
       toast.warn("Vui lòng đăng nhập để đặt lịch hẹn.", {
         onClose: () => {
-          resetBookingState();
+          setIsBookingDisabled(false);
           navigate("/account");
         },
         autoClose: 3000,
       });
-      setIsLoadingBooking(false); // Kết thúc loading
       return;
     }
 
@@ -98,7 +98,7 @@ const Appointment = () => {
             <button
               onClick={() => {
                 navigate("/my-profile");
-                resetBookingState();
+                setIsBookingDisabled(false);
                 toast.dismiss();
               }}
               className="bg-green-500 text-white px-4 py-2 rounded transition duration-300 hover:bg-green-600"
@@ -107,7 +107,7 @@ const Appointment = () => {
             </button>
             <button
               onClick={() => {
-                resetBookingState();
+                setIsBookingDisabled(false);
                 toast.dismiss();
               }}
               className="bg-gray-300 text-black px-4 py-2 rounded transition duration-300 hover:bg-gray-400"
@@ -121,17 +121,23 @@ const Appointment = () => {
           autoClose: 5000,
           closeOnClick: false,
           draggable: false,
+          onClose: () => setIsBookingDisabled(false),
         }
       );
-      setIsLoadingBooking(false); // Kết thúc loading
+      return;
+    }
+
+    if (docInfo && docInfo.available === false) {
+      toast.warn("Hiện tại bác sĩ không nhận đặt lịch hẹn.", {
+        onClose: () => setIsBookingDisabled(false),
+      });
       return;
     }
 
     if (!selectedDate || !slotTime) {
       toast.warn("Vui lòng chọn ngày và ca làm việc.", {
-        onClose: () => resetBookingState(),
+        onClose: () => setIsBookingDisabled(false),
       });
-      setIsLoadingBooking(false); // Kết thúc loading
       return;
     }
 
@@ -153,7 +159,7 @@ const Appointment = () => {
           <button
             onClick={() => {
               confirmBooking();
-              setIsLoadingBooking(false); // Kết thúc loading
+              setIsBookingDisabled(false);
               toast.dismiss();
             }}
             className="bg-green-500 text-white px-4 py-2 rounded transition duration-300 hover:bg-green-600"
@@ -162,7 +168,7 @@ const Appointment = () => {
           </button>
           <button
             onClick={() => {
-              setIsLoadingBooking(false); // Kết thúc loading
+              setIsBookingDisabled(false);
               toast.dismiss();
             }}
             className="bg-gray-300 text-black px-4 py-2 rounded transition duration-300 hover:bg-gray-400"
@@ -176,15 +182,9 @@ const Appointment = () => {
         autoClose: 5000,
         closeOnClick: false,
         draggable: false,
-        onClose: () => setIsLoadingBooking(false),
+        onClose: () => setIsBookingDisabled(false),
       }
     );
-  };
-
-  const resetBookingState = () => {
-    setSelectedDate(null);
-    setSlotTime("");
-    setIsBookingDisabled(false);
   };
 
   const confirmBooking = async () => {
@@ -192,33 +192,30 @@ const Appointment = () => {
       const patientId = user?.id || JSON.parse(localStorage.getItem("user"))?.id;
       if (!patientId) {
         console.error("Không tìm thấy thông tin bệnh nhân.");
-        toast.error("Thông tin bệnh nhân không hợp lệ.");
-        resetBookingState();
         return;
       }
-  
+
       const selectedSchedule = doctorSchedule[selectedDate]?.find(
         (schedule) =>
           (schedule.work_shift === "morning" && slotTime === "Buổi sáng") ||
           (schedule.work_shift === "afternoon" && slotTime === "Buổi chiều")
       );
-  
+
       if (!selectedSchedule) {
         console.error("Không tìm thấy ca làm việc đã chọn.");
         toast.error("Không tìm thấy lịch hẹn cho ngày và giờ đã chọn.");
-        resetBookingState();
         return;
       }
-  
+
       const appointmentData = {
         patient_id: patientId,
         doctor_id: docId,
         work_shift: selectedSchedule.work_shift,
         work_date: selectedSchedule.work_date,
       };
-  
+
       const token = user?.token || "";
-      await axios.post(
+      const response = await axios.post(
         `${VITE_BACKEND_URI}/create-appointment/${patientId}`,
         appointmentData,
         {
@@ -228,15 +225,17 @@ const Appointment = () => {
           },
         }
       );
-  
+
       toast.success("Đặt lịch hẹn thành công!");
-      resetBookingState();
+      setSelectedDate(null);
+      setSlotTime("");
+      setIsBookingDisabled(false);
     } catch (error) {
       console.error("Error creating appointment:", error);
       toast.error(error.response?.data?.message || "Lỗi không xác định.");
-      resetBookingState();
-    } finally {
-      setIsLoadingBooking(false); // Đảm bảo kết thúc loading
+      setIsBookingDisabled(false);
+      setSelectedDate(null);
+      setSlotTime("");
     }
   };
 
@@ -322,28 +321,26 @@ const Appointment = () => {
       <div className="sm:ml-72 sm:pl-4 mt-4 font-medium text-gray-700">
         <p className="flex justify-between items-center">
           Đặt khám nhanh:
-          {Object.keys(doctorSchedule).length > 8 && ( // Kiểm tra số lượng lịch
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => {
-                  const scrollContainer = document.querySelector(".overflow-x-auto");
-                  scrollContainer.scrollBy({ left: -100, behavior: "smooth" });
-                }}
-                className="w-10 h-10 bg-gray-300 text-black p-2 rounded-full transition-all duration-300 hover:bg-gray-400"
-              >
-                &#8592;
-              </button>
-              <button
-                onClick={() => {
-                  const scrollContainer = document.querySelector(".overflow-x-auto");
-                  scrollContainer.scrollBy({ left: 100, behavior: "smooth" });
-                }}
-                className="w-10 h-10 bg-gray-300 text-black p-2 rounded-full transition-all duration-300 hover:bg-gray-400"
-              >
-                &#8594;
-              </button>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                const scrollContainer = document.querySelector(".overflow-x-auto");
+                scrollContainer.scrollBy({ left: -100, behavior: "smooth" });
+              }}
+              className="bg-gray-300 text-black p-2 rounded-full transition-all duration-300 hover:bg-gray-400"
+            >
+              &#8592;
+            </button>
+            <button
+              onClick={() => {
+                const scrollContainer = document.querySelector(".overflow-x-auto");
+                scrollContainer.scrollBy({ left: 100, behavior: "smooth" });
+              }}
+              className="bg-gray-300 text-black p-2 rounded-full transition-all duration-300 hover:bg-gray-400"
+            >
+              &#8594;
+            </button>
+          </div>
         </p>
 
         {errorLoadingSchedule ? (
@@ -407,21 +404,11 @@ const Appointment = () => {
         {selectedDate && slotTime && (
           <button
             onClick={handleBooking}
-            disabled={isBookingDisabled || isLoadingBooking} // Disable nếu đang loading
-            className={`bg-[#00759c] text-white text-sm font-bold px-14 py-3 rounded-full my-6 ml-5 ${isBookingDisabled || isLoadingBooking ? "opacity-50 cursor-not-allowed" : ""
+            disabled={isBookingDisabled}
+            className={`bg-[#00759c] text-white text-sm font-bold px-14 py-3 rounded-full my-6 ml-5 ${isBookingDisabled ? "opacity-50 cursor-not-allowed" : ""
               }`}
           >
-            {isLoadingBooking ? ( // Hiển thị spinner nếu đang loading
-              <div className="flex items-center">
-                <svg className="animate-spin h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 0116 0 8 8 0 01-16 0z" />
-                </svg>
-                Đang đặt lịch...
-              </div>
-            ) : (
-              "Đặt lịch hẹn"
-            )}
+            Đặt lịch hẹn
           </button>
         )}
       </div>
