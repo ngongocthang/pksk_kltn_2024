@@ -106,7 +106,7 @@ const AdminContextProvider = ({ children }) => {
       }
     } catch (error) {
       console.error("Error fetching patients:", error);
-      toast.error(error.response?.data?.message || error.message);
+      // toast.error(error.response?.data?.message || error.message);
     }
   };
   const countPatients = async () => {
