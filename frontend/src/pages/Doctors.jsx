@@ -52,7 +52,6 @@ const Doctors = () => {
     try {
       setIsLoading(true);
       const response = await axios.get(`${VITE_BACKEND_URI}/doctor/find-all`);
-      console.log("Doctors fetched:", response.data.doctors); // Kiểm tra dữ liệu
       setDoctors(response.data.success ? response.data.doctors : []);
     } catch (error) {
       console.error("Error fetching doctors:", error);
@@ -76,7 +75,6 @@ const Doctors = () => {
   const applyFilter = () => {
     let filtered = doctors;
 
-    console.log("Doctors before filtering:", doctors); // Kiểm tra danh sách bác sĩ trước khi lọc
 
     // Lọc theo chuyên khoa
     if (speciality) {
@@ -85,7 +83,6 @@ const Doctors = () => {
       );
     }
 
-    console.log("Filtered Doctors:", filtered); // Kiểm tra danh sách bác sĩ sau khi lọc
 
     // Lọc theo ngày làm việc
     if (selectedDate) {
