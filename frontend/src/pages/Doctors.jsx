@@ -74,6 +74,9 @@ const Doctors = () => {
   };
 
   const applyFilter = () => {
+    const queryParams = new URLSearchParams(location.search);
+    queryParams.delete("page"); // Xóa tham số page khỏi URL
+
     let filtered = doctors;
 
     if (speciality) {
@@ -94,6 +97,9 @@ const Doctors = () => {
 
     setFilterDoc(filtered);
     setNoDoctorsFound(filtered.length === 0 && (speciality || selectedDate));
+
+    // Cập nhật URL với các tham số mới
+    updateURL(queryParams);
   };
 
   useEffect(() => {
@@ -103,7 +109,7 @@ const Doctors = () => {
 
   useEffect(() => {
     applyFilter();
-  }, [doctors, speciality, selectedDate, currentPage]);
+  }, [doctors, speciality, selectedDate]);
 
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
@@ -144,7 +150,8 @@ const Doctors = () => {
       }
     }
 
-    if (totalDoctors >= 8 && queryParams.get("page") !== null) {
+    // Luôn cập nhật tham số page
+    if (queryParams.get("page") !== null) {
       sortedParams.set("page", queryParams.get("page"));
     }
 
