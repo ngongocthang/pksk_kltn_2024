@@ -6,6 +6,7 @@ const upload = require("./helpers/multer-config");
 const session = require("express-session");
 const cron = require("node-cron");
 const sendAppointmentReminders = require("./services/index");
+const createWebSocketServer = require('./helpers/websocket-config');
 
 const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
 const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY;
@@ -114,6 +115,9 @@ app.post("/upload", upload.single("image"), async (req, res) => {
 });
 
 // Khởi động server
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
+
+// Khởi động WebSocket server
+createWebSocketServer(server);
