@@ -20,9 +20,11 @@ const Navbar = () => {
       // Khởi tạo WebSocket
       const wsProtocol =
         window.location.protocol === "https:" ? "wss://" : "ws://";
-      const ws = new WebSocket(
-        `${wsProtocol}${VITE_BACKEND_URI.replace("http://", "")}`
-      );
+
+      // Loại bỏ http:// hoặc https:// từ VITE_BACKEND_URI
+      const backendUri = VITE_BACKEND_URI.replace(/^https?:\/\//, "");
+
+      const ws = new WebSocket(`${wsProtocol}${backendUri}`);
       wsRef.current = ws;
 
       ws.onopen = () => {
