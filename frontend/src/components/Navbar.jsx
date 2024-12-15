@@ -40,6 +40,7 @@ const Navbar = () => {
       wsRef.current = ws;
 
       ws.onopen = () => {
+        console.log("WebSocket connection opened");
         ws.send(JSON.stringify({ user_id: user.id }));
       };
 
@@ -63,7 +64,6 @@ const Navbar = () => {
         console.log("WebSocket connection closed");
       };
 
-      // Cleanup WebSocket khi component bị unmount
       return () => ws.close();
     }
   }, [user]);

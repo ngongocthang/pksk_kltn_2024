@@ -235,7 +235,7 @@ const Dashboard = () => {
             <p className="font-semibold text-gray-800 text-lg">Lịch hẹn sắp tới</p>
           </div>
           {/* Nội dung */}
-          <div className="overflow-x-auto mt-4">
+          <div className="overflow-x-auto">
             {/* Giao diện desktop */}
             <div className="hidden sm:block">
               <div className="max-h-[420px] overflow-y-auto border border-gray-200 rounded-lg">
