@@ -1,7 +1,7 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
-import { AppContext } from '../context/AppContext';
-import { assets } from '../assets/assets';
+import React, { useContext, useEffect, useRef, useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { AppContext } from "../context/AppContext";
+import { assets } from "../assets/assets";
 
 const VITE_BACKEND_URI = import.meta.env.VITE_BACKEND_URI;
 
@@ -18,7 +18,11 @@ const Navbar = () => {
   useEffect(() => {
     if (user) {
       // Khởi tạo WebSocket
-      const ws = new WebSocket(`ws://${VITE_BACKEND_URI.replace('http://', '')}`);
+      const wsProtocol =
+        window.location.protocol === "https:" ? "wss://" : "ws://";
+      const ws = new WebSocket(
+        `${wsProtocol}${VITE_BACKEND_URI.replace("http://", "")}`
+      );
       wsRef.current = ws;
 
       ws.onopen = () => {
@@ -39,11 +43,11 @@ const Navbar = () => {
       };
 
       ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
+        console.error("WebSocket error:", error);
       };
 
       ws.onclose = () => {
-        console.log('WebSocket connection closed');
+        console.log("WebSocket connection closed");
       };
 
       // Cleanup WebSocket khi component bị unmount
@@ -54,7 +58,9 @@ const Navbar = () => {
   // Hàm gửi yêu cầu cập nhật thông báo thủ công
   const requestNotificationUpdate = () => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ user_id: user.id, action: 'update' }));
+      wsRef.current.send(
+        JSON.stringify({ user_id: user.id, action: "update" })
+      );
       // console.log('Request sent to update notifications');
     }
   };
@@ -69,21 +75,21 @@ const Navbar = () => {
   }, [user]);
 
   const handleLogout = () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
     setUser(null);
-    navigate('/account');
+    navigate("/account");
   };
 
   const handleNotificationClick = () => {
-    navigate('/notifications');
+    navigate("/notifications");
     // Cập nhật trạng thái thông báo (nếu cần)
   };
 
   return (
     <div className="flex items-center justify-between text-sm py-4 mb-5 border-b border-b-gray-400 bg-white sticky top-0 z-50">
       <img
-        onClick={() => navigate('/')}
+        onClick={() => navigate("/")}
         className="w-20 sm:w-24 cursor-pointer"
         src={assets.logo}
         alt="Logo"
@@ -114,22 +120,38 @@ const Navbar = () => {
             onMouseEnter={() => setShowDropdown(true)}
             onMouseLeave={() => setShowDropdown(false)}
           >
-            <img className="w-8 rounded-full" src={assets.profile_pic} alt="Avatar" />
+            <img
+              className="w-8 rounded-full"
+              src={assets.profile_pic}
+              alt="Avatar"
+            />
             <p className="font-medium text-gray-700">{user.name}</p>
 
             {showDropdown && (
               <div className="absolute top-0 -left-6 pt-14 text-base font-medium text-gray-600 z-20">
                 <div className="min-w-52 bg-stone-100 rounded flex flex-col gap-4 p-4">
-                  <p onClick={() => navigate('my-profile')} className="hover:text-black cursor-pointer">
+                  <p
+                    onClick={() => navigate("my-profile")}
+                    className="hover:text-black cursor-pointer"
+                  >
                     Hồ sơ của tôi
                   </p>
-                  <p onClick={() => navigate('my-appointments')} className="hover:text-black cursor-pointer">
+                  <p
+                    onClick={() => navigate("my-appointments")}
+                    className="hover:text-black cursor-pointer"
+                  >
                     Lịch hẹn của tôi
                   </p>
-                  <p onClick={() => navigate('medical-history')} className="hover:text-black cursor-pointer">
+                  <p
+                    onClick={() => navigate("medical-history")}
+                    className="hover:text-black cursor-pointer"
+                  >
                     Lịch sử khám bệnh
                   </p>
-                  <p onClick={handleLogout} className="hover:text-black cursor-pointer">
+                  <p
+                    onClick={handleLogout}
+                    className="hover:text-black cursor-pointer"
+                  >
                     Đăng xuất
                   </p>
                 </div>
