@@ -16,18 +16,6 @@ const Navbar = () => {
   const wsRef = useRef(null);
 
   useEffect(() => {
-    // Kiểm tra token khi component được khởi tạo
-    const token = localStorage.getItem("token");
-    if (token) {
-      // Nếu có token, bạn có thể lấy thông tin người dùng từ localStorage
-      const userData = JSON.parse(localStorage.getItem("user"));
-      if (userData) {
-        setUser(userData);
-      }
-    }
-  }, [setUser]);
-
-  useEffect(() => {
     if (user) {
       // Khởi tạo WebSocket
       const wsProtocol =
@@ -40,6 +28,7 @@ const Navbar = () => {
       wsRef.current = ws;
 
       ws.onopen = () => {
+        // console.log('WebSocket connection established');
         ws.send(JSON.stringify({ user_id: user.id }));
       };
 
@@ -74,6 +63,7 @@ const Navbar = () => {
       wsRef.current.send(
         JSON.stringify({ user_id: user.id, action: "update" })
       );
+      // console.log('Request sent to update notifications');
     }
   };
 
@@ -95,6 +85,7 @@ const Navbar = () => {
 
   const handleNotificationClick = () => {
     navigate("/notifications");
+    // Cập nhật trạng thái thông báo (nếu cần)
   };
 
   return (
