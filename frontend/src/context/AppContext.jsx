@@ -1,10 +1,11 @@
 import PropTypes from "prop-types";
 import { createContext, useEffect, useRef, useState } from "react";
-import Ably from 'ably/promises'; // Import Ably
+import Ably from 'ably';
 
 export const AppContext = createContext();
 const VITE_BACKEND_URI = import.meta.env.VITE_BACKEND_URI;
-const ably = new Ably.Realtime('YOUR_API_KEY'); // Thay YOUR_API_KEY bằng API key của bạn
+const ABLY_KEY = import.meta.env.ABLY_KEY;
+const ably = new Ably.Realtime(ABLY_KEY);
 
 const AppContextProvider = (props) => {
   const [user, setUser] = useState(() => {
