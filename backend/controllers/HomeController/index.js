@@ -6,6 +6,7 @@ const RoleUser = require("../../models/User_role");
 const Role = require("../../models/Role");
 const Schedule = require("../../models/Schedule");
 const validatePatient = require("../../requests/validatePatient");
+const validateResetPassword = require("../../requests/validateResetPassword");
 const Patient = require("../../models/Patient");
 const Doctor = require("../../models/Doctor");
 const Appointment = require("../../models/Appointment");
@@ -13,11 +14,10 @@ const Payment = require("../../models/Payment");
 const History_appointment = require("../../models/Appointment_history");
 JWT_SECRET = process.env.JWT_SECRET;
 
-const { OAuth2Client } = require('google-auth-library');
+const { OAuth2Client } = require("google-auth-library");
 const client = new OAuth2Client(process.env.GG_CLIENT_ID);
 const transporter = require("../../helpers/mailer-config");
-const {FRONTEND_URI} = process.env.FRONTEND_URI;
-
+const EMAIL_USER = process.env.EMAIL_USER;
 
 const register = async (req, res) => {
   try {
@@ -25,6 +25,13 @@ const register = async (req, res) => {
     const { error } = validatePatient(req.body);
     if (error) {
       return res.status(400).json({ message: error.details[0].message });
+    }
+
+    const email = req.body.email;
+
+    const checkEmail = await User.findOne({ email: email });
+    if (checkEmail) {
+      return res.status(400).json({ message: "Email đã tồn tại!" });
     }
 
     // Băm mật khẩu
@@ -200,7 +207,9 @@ const getHistoryAppointment = async (req, res) => {
             work_date: appointment.work_date,
             status: appointment.status,
             doctor_name: nameDoctor ? nameDoctor.name : "Unknown Name Doctor",
-            doctor_image: imageDoctor ? imageDoctor.image : "Unknown Image Doctor",
+            doctor_image: imageDoctor
+              ? imageDoctor.image
+              : "Unknown Image Doctor",
             createdAt: history.createdAt,
             updatedAt: history.updatedAt,
           },
@@ -228,6 +237,33 @@ const getHistoryAppointment = async (req, res) => {
   }
 };
 
+// const getdataMoneyDashboardAdmin = async (req, res) => {
+//   try {
+//     const payments = await Payment.find({}).populate("appointment_id");
+//     if (!payments) {
+//       return res.status(404).json({ message: "Payment not found" });
+//     }
+
+//     // Nhóm theo tháng và tính tổng số tiền
+//     const revenueByMonth = payments.reduce((acc, payment) => {
+//       const workDate = payment.appointment_id.work_date;
+//       const month = new Date(workDate).toLocaleString("default", {
+//         month: "long",
+//       }); // Lấy tên tháng
+//       acc[month] = (acc[month] || 0) + payment.amount; // Cộng dồn số tiền
+//       return acc;
+//     }, {});
+
+//     // Chuyển đổi kết quả thành mảng
+//     const revenueData = Object.entries(revenueByMonth).map(
+//       ([month, revenue]) => ({ month, revenue })
+//     );
+
+//     return res.status(200).json(revenueData);
+//   } catch (error) {
+//     return res.status(500).json({ message: error.message });
+//   }
+// };
 const getdataMoneyDashboardAdmin = async (req, res) => {
   try {
     const payments = await Payment.find({}).populate("appointment_id");
@@ -237,11 +273,14 @@ const getdataMoneyDashboardAdmin = async (req, res) => {
 
     // Nhóm theo tháng và tính tổng số tiền
     const revenueByMonth = payments.reduce((acc, payment) => {
-      const workDate = payment.appointment_id.work_date;
-      const month = new Date(workDate).toLocaleString("default", {
-        month: "long",
-      }); // Lấy tên tháng
-      acc[month] = (acc[month] || 0) + payment.amount; // Cộng dồn số tiền
+      // Kiểm tra xem appointment_id có tồn tại không
+      if (payment.appointment_id) {
+        const workDate = payment.appointment_id.work_date;
+        const month = new Date(workDate).toLocaleString("default", {
+          month: "long",
+        }); // Lấy tên tháng
+        acc[month] = (acc[month] || 0) + payment.amount; // Cộng dồn số tiền
+      }
       return acc;
     }, {});
 
@@ -256,42 +295,97 @@ const getdataMoneyDashboardAdmin = async (req, res) => {
   }
 };
 
+
+// const getAllScheduleDoctor = async (req, res) => {
+//   try {
+//     // Lấy danh sách bác sĩ
+//     const doctors = await Doctor.find({})
+//       .populate("user_id", "name image")
+//       .populate("specialization_id", "name");
+//     if (!doctors || doctors.length === 0) {
+//       return res.status(404).json({ message: "Doctor not found" });
+//     }
+
+//     // Lấy lịch làm việc của các bác sĩ
+//     const schedules = await Schedule.find({
+//       doctor_id: { $in: doctors.map((doctor) => doctor._id) },
+//     });
+//     if (!schedules || schedules.length === 0) {
+//       return res.status(404).json({ message: "Schedule not found" });
+//     }
+
+//     // Kết hợp thông tin bác sĩ với lịch làm việc
+//     const result = doctors.map((doctor) => {
+//       const doctorSchedules = schedules
+//         .filter((schedule) => schedule.doctor_id.equals(doctor._id))
+//         .map((schedule) => ({
+//           _id: schedule._id,
+//           work_date: schedule.work_date,
+//           work_shift: schedule.work_shift,
+//           createdAt: schedule.createdAt,
+//           updatedAt: schedule.updatedAt,
+//           doctorName: doctor.user_id.name, // Thêm tên bác sĩ
+//           doctorImage: doctor.user_id.image, // Thêm ả bác sĩ
+//         }));
+
+//       return {
+//         doctorId: doctor._id,
+//         doctorName: doctor.user_id.name,
+//         doctorImage: doctor.user_id.image,
+//         specialization: doctor.specialization_id.name,
+//         schedules: doctorSchedules,
+//       };
+//     });
+
+//     return res.status(200).json(result);
+//   } catch (error) {
+//     return res.status(500).json({ success: false, message: error.message });
+//   }
+// };
 const getAllScheduleDoctor = async (req, res) => {
   try {
     // Lấy danh sách bác sĩ
-    const doctors = await Doctor.find({}).populate("user_id", "name image").populate("specialization_id", "name"); ;
+    const doctors = await Doctor.find({})
+      .populate("user_id", "name image")
+      .populate("specialization_id", "name");
+    
     if (!doctors || doctors.length === 0) {
       return res.status(404).json({ message: "Doctor not found" });
     }
 
     // Lấy lịch làm việc của các bác sĩ
-    const schedules = await Schedule.find({ doctor_id: { $in: doctors.map(doctor => doctor._id) } });
+    const schedules = await Schedule.find({
+      doctor_id: { $in: doctors.map((doctor) => doctor._id) },
+    });
+    
     if (!schedules || schedules.length === 0) {
       return res.status(404).json({ message: "Schedule not found" });
     }
 
     // Kết hợp thông tin bác sĩ với lịch làm việc
-    const result = doctors.map(doctor => {
-      const doctorSchedules = schedules
-        .filter(schedule => schedule.doctor_id.equals(doctor._id))
-        .map(schedule => ({
-          _id: schedule._id,
-          work_date: schedule.work_date,
-          work_shift: schedule.work_shift,
-          createdAt: schedule.createdAt,
-          updatedAt: schedule.updatedAt,
-          doctorName: doctor.user_id.name, // Thêm tên bác sĩ
-          doctorImage: doctor.user_id.image // Thêm ả bác sĩ
-        }));
+    const result = doctors
+      .filter((doctor) => doctor.user_id) // Loại bỏ bác sĩ không có user_id
+      .map((doctor) => {
+        const doctorSchedules = schedules
+          .filter((schedule) => schedule.doctor_id.equals(doctor._id))
+          .map((schedule) => ({
+            _id: schedule._id,
+            work_date: schedule.work_date,
+            work_shift: schedule.work_shift,
+            createdAt: schedule.createdAt,
+            updatedAt: schedule.updatedAt,
+            doctorName: doctor.user_id.name, // Thêm tên bác sĩ
+            doctorImage: doctor.user_id.image, // Thêm ảnh bác sĩ
+          }));
 
-      return {
-        doctorId: doctor._id,
-        doctorName: doctor.user_id.name,
-        doctorImage: doctor.user_id.image,
-        specialization: doctor.specialization_id.name,
-        schedules: doctorSchedules
-      };
-    });
+        return {
+          doctorId: doctor._id,
+          doctorName: doctor.user_id.name,
+          doctorImage: doctor.user_id.image,
+          specialization: doctor.specialization_id.name,
+          schedules: doctorSchedules,
+        };
+      });
 
     return res.status(200).json(result);
   } catch (error) {
@@ -299,25 +393,31 @@ const getAllScheduleDoctor = async (req, res) => {
   }
 };
 
+
 const googleLogin = async (req, res) => {
   const { credential } = req.body;
   try {
     const ticket = await client.verifyIdToken({
       idToken: credential,
       audience: process.env.GG_CLIENT_ID,
-  });
+    });
 
     const payload = ticket.getPayload();
     const email = payload.email;
 
     // Kiểm tra xem người dùng đã tồn tại chưa
     let user = await User.findOne({ email });
+    
+    // Băm mật khẩu
+    const hashedPassword = await bcrypt.hash("123456", 10);
+
     if (!user) {
       // Nếu không tồn tại, tạo người dùng mới
       user = await User.create({
         email,
         name: payload.name,
-        password: "123456"
+        password: hashedPassword,
+        phone: "",
       });
       const role = await Role.findOne({ name: "patient" });
 
@@ -339,7 +439,9 @@ const googleLogin = async (req, res) => {
     }
 
     // Tạo token JWT
-    const roleUsers = await RoleUser.find({ user_id: user._id }).populate("role_id");
+    const roleUsers = await RoleUser.find({ user_id: user._id }).populate(
+      "role_id"
+    );
     const userRole = roleUsers.length > 0 ? roleUsers[0].role_id.name : null;
 
     const token = jwt.sign({ id: user._id, role: userRole }, JWT_SECRET, {
@@ -352,6 +454,7 @@ const googleLogin = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        phone: user.phone ? user.phone : null,
         role: userRole,
         token: token,
       },
@@ -379,7 +482,7 @@ const forgotPassword = async (req, res) => {
     await user.save();
 
     // Gửi email khôi phục mật khẩu
-    const resetUrl = `${FRONTEND_URI}/reset-password/${resetToken}`;
+    const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
     const mailOptions = {
       to: email,
       subject: "Khôi phục mật khẩu",
@@ -399,13 +502,21 @@ const resetPassword = async (req, res) => {
   const { password } = req.body;
 
   try {
+
+    const { error } = validateResetPassword(req.body);
+    if (error) {
+      return res.status(400).json({ message: error.details[0].message });
+    }
+
     const user = await User.findOne({
       resetPasswordToken: token,
       resetPasswordExpires: { $gt: Date.now() },
     });
 
     if (!user) {
-      return res.status(400).json({ message: "Token không hợp lệ hoặc đã hết hạn!" });
+      return res
+        .status(400)
+        .json({ message: "Token không hợp lệ hoặc đã hết hạn!" });
     }
 
     // Băm mật khẩu mới
@@ -449,8 +560,76 @@ const contact = async (req, res) => {
   }
 };
 
+// Hàm lấy lịch hẹn đã lọc
+const getFilteredScheduleDoctor = async (req, res) => {
+  const { specialization, date } = req.query;
+
+  try {
+    // Lấy danh sách bác sĩ
+    const doctors = await Doctor.find({})
+      .populate("user_id", "name image")
+      .populate("specialization_id", "name");
+
+    if (!doctors || doctors.length === 0) {
+      return res.status(404).json({ message: "Doctor not found" });
+    }
+
+    // Lấy lịch làm việc của các bác sĩ
+    const schedules = await Schedule.find({
+      doctor_id: { $in: doctors.map((doctor) => doctor._id) },
+    });
+
+    if (!schedules || schedules.length === 0) {
+      return res.status(404).json({ message: "Schedule not found" });
+    }
+
+    // Kết hợp thông tin bác sĩ với lịch làm việc
+    const result = doctors.map((doctor) => {
+      const doctorSchedules = schedules
+        .filter((schedule) => schedule.doctor_id.equals(doctor._id))
+        .map((schedule) => ({
+          _id: schedule._id,
+          work_date: schedule.work_date,
+          work_shift: schedule.work_shift,
+          createdAt: schedule.createdAt,
+          updatedAt: schedule.updatedAt,
+          doctorName: doctor.user_id.name,
+          doctorImage: doctor.user_id.image,
+        }));
+
+      return {
+        doctorId: doctor._id,
+        doctorName: doctor.user_id.name,
+        doctorImage: doctor.user_id.image,
+        specialization: doctor.specialization_id.name,
+        schedules: doctorSchedules,
+      };
+    });
+
+    // Lọc theo chuyên khoa
+    if (specialization) {
+      result = result.filter(doctor => doctor.specialization === specialization);
+    }
+
+    // Lọc theo ngày
+    if (date) {
+      result = result.map(doctor => ({
+        ...doctor,
+        schedules: doctor.schedules.filter(schedule => {
+          const workDate = new Date(schedule.work_date).toISOString().split("T")[0];
+          return workDate === date;
+        }),
+      })).filter(doctor => doctor.schedules.length > 0);
+    }
+
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
-  register,   
+  register,
   login,
   logout,
   filter,
@@ -460,5 +639,6 @@ module.exports = {
   googleLogin,
   forgotPassword,
   resetPassword,
-  contact
+  contact,
+  getFilteredScheduleDoctor
 };

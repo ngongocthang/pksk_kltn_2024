@@ -250,7 +250,7 @@ const DoctorDashboard = () => {
             <img className="w-14 mx-auto" src={assets.patients_icon} alt="" />
             <div>
               <p className="text-xl font-semibold text-white">{patients.length}</p>
-              <p className="text-white text-xl font-semibold">Bệnh nhân đã khám</p>
+              <p className="text-white text-xl font-semibold">Bệnh nhân</p>
             </div>
           </div>
         </div>
@@ -276,8 +276,8 @@ const DoctorDashboard = () => {
           </div>
 
           {/* Bảng */}
-          <div className="pt-4">
-            <div className="max-h-80 overflow-y-auto rounded-lg border border-gray-200">
+          <div className="">
+            <div className="max-h-80 overflow-y-auto border border-gray-200">
               <table className="w-full text-sm bg-white">
                 {/* Header */}
                 <thead className="bg-gray-100 sticky top-0">
@@ -344,8 +344,8 @@ const DoctorDashboard = () => {
           </div>
 
           {/* Bảng */}
-          <div className="pt-4">
-            <div className="max-h-80 overflow-y-auto border border-gray-200 rounded-lg">
+          <div className="">
+            <div className="max-h-80 overflow-y-auto border border-gray-200">
               <table className="w-full text-sm bg-white">
                 {/* Header */}
                 <thead className="bg-gray-100 sticky top-0 z-10">
@@ -420,7 +420,7 @@ const DoctorDashboard = () => {
 
               {/* Bệnh nhân */}
               <div className="text-base font-semibold mb-2">
-                <span className="font-semibold">Bệnh nhân: </span>{item.patient_name ? item.patient_name : "Unknown"}
+                <span className="font-semibold">Bệnh nhân: </span>{item.patient_name}
               </div>
 
               {/* Ngày khám */}

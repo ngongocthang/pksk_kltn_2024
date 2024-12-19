@@ -10,7 +10,6 @@ import { DoctorContext } from "../context/DoctorContext";
 import "../index.css";
 
 const VITE_BACKEND_URI = import.meta.env.VITE_BACKEND_URI;
-const VITE_ADMIN_URI = import.meta.env.VITE_ADMIN_URI;
 
 const Navbar = () => {
   const { aToken, setAToken } = useContext(AdminContext);
@@ -148,7 +147,9 @@ const Navbar = () => {
     <div className="flex justify-between items-center px-4 sm:px-10 py-3 border-b bg-white sticky top-0 z-50">
       <a
         href={
-          aToken ? `${VITE_ADMIN_URI}` : `${VITE_BACKEND_URI}/doctor-dashboard`
+          aToken
+            ? "http://localhost:5174/admin-dashboard"
+            : "http://localhost:5174/doctor-dashboard"
         }
       >
         <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-xs">
@@ -174,7 +175,7 @@ const Navbar = () => {
             <BellIcon className="w-6 h-6 text-gray-600" />
             {unreadNotifications > 0 && (
               <span
-                className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center"
+                className="absolute bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center -top-1 -right-1"
                 role="button"
                 aria-label="Xem thông báo chưa đọc"
               >

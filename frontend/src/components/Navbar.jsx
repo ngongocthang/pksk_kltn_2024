@@ -1,131 +1,82 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
 import { assets } from "../assets/assets";
 
-const VITE_BACKEND_URI = import.meta.env.VITE_BACKEND_URI;
-
 const Navbar = () => {
   const navigate = useNavigate();
-  const { user, setUser } = useContext(AppContext);
-  const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const { user, setUser, unreadCount, requestNotificationUpdate } =
+    useContext(AppContext);
   const [showDropdown, setShowDropdown] = useState(false);
 
-  // Sử dụng useRef để giữ kết nối WebSocket
-  const wsRef = useRef(null);
-
-  useEffect(() => {
-    // Kiểm tra token khi component được khởi tạo
-    const token = localStorage.getItem("token");
-    if (token) {
-      // Nếu có token, bạn có thể lấy thông tin người dùng từ localStorage
-      const userData = JSON.parse(localStorage.getItem("user"));
-      if (userData) {
-        setUser(userData);
-      }
-    }
-  }, [setUser]);
-
-  useEffect(() => {
-    if (user) {
-      // Khởi tạo WebSocket
-      const wsProtocol =
-        window.location.protocol === "https:" ? "wss://" : "ws://";
-
-      // Loại bỏ http:// hoặc https:// từ VITE_BACKEND_URI
-      const backendUri = VITE_BACKEND_URI.replace(/^https?:\/\//, "");
-
-      const ws = new WebSocket(`${wsProtocol}${backendUri}`);
-      wsRef.current = ws;
-
-      ws.onopen = () => {
-        console.log("WebSocket connection opened");
-        ws.send(JSON.stringify({ user_id: user.id }));
-      };
-
-      ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-
-        // Cập nhật số lượng thông báo chưa đọc và danh sách thông báo
-        if (data.unreadCount !== undefined) {
-          setUnreadCount(data.unreadCount);
-        }
-        if (data.notifications) {
-          setNotifications(data.notifications);
-        }
-      };
-
-      ws.onerror = (error) => {
-        console.error("WebSocket error:", error);
-      };
-
-      ws.onclose = () => {
-        console.log("WebSocket connection closed");
-      };
-
-      return () => ws.close();
-    }
-  }, [user]);
-
-  // Hàm gửi yêu cầu cập nhật thông báo thủ công
-  const requestNotificationUpdate = () => {
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(
-        JSON.stringify({ user_id: user.id, action: "update" })
-      );
-    }
-  };
-
-  // Tự động yêu cầu cập nhật thông báo mỗi giây
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      requestNotificationUpdate(); // Gọi hàm để cập nhật thông báo
-    }, 2000); // Cập nhật mỗi giây
-
-    return () => clearInterval(intervalId); // Dọn dẹp interval khi component unmount
-  }, [user]);
+  // Kiểm tra token
+  const isLoggedIn = !!localStorage.getItem("token");
 
   const handleLogout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
-    setUser(null);
+    localStorage.removeItem("unreadCount");
+    setUser(null); // Đặt user về null
     navigate("/account");
   };
 
   const handleNotificationClick = () => {
     navigate("/notifications");
+    requestNotificationUpdate();
+  };
+
+  const handleDropdownItemClick = () => {
+    setShowDropdown(false); // Đóng dropdown khi chọn mục
   };
 
   return (
-    <div className="flex items-center justify-between text-sm py-4 mb-5 border-b border-b-gray-400 bg-white sticky top-0 z-50">
+    <div className="flex items-center justify-between text-sm py-4 mb-5 border-b border-gray-400 bg-white sticky top-0 z-50">
       <img
         onClick={() => navigate("/")}
         className="w-20 sm:w-24 cursor-pointer"
         src={assets.logo}
         alt="Logo"
       />
-
-      <ul className="hidden md:flex items-start gap-5 font-medium">
-        <NavLink to="/" activeClassName="underline">
-          <li className="py-1 text-base">Trang chủ</li>
+      <ul className="hidden md:flex items-center gap-5 font-medium">
+        <NavLink to="/" className="py-1 text-base" activeClassName="underline">
+          Trang chủ
+          <hr className='border-none outline-none h-0.5 bg-[#00759c] w-3/5 m-auto hidden' />
         </NavLink>
-        <NavLink to="/doctors" activeClassName="underline">
-          <li className="py-1 text-base">Tất cả bác sĩ</li>
+        <NavLink
+          to="/doctors"
+          className="py-1 text-base"
+          activeClassName="underline"
+        >
+          Tất cả bác sĩ
+          <hr className='border-none outline-none h-0.5 bg-[#00759c] w-3/5 m-auto hidden' />
         </NavLink>
-        <NavLink to="/abouts" activeClassName="underline">
-          <li className="py-1 text-base">Về chúng tôi</li>
+        <NavLink
+          to="/abouts"
+          className="py-1 text-base"
+          activeClassName="underline"
+        >
+          Về chúng tôi
+          <hr className='border-none outline-none h-0.5 bg-[#00759c] w-3/5 m-auto hidden' />
         </NavLink>
-        <NavLink to="/contact" activeClassName="underline">
-          <li className="py-1 text-base">Liên hệ</li>
+        <NavLink
+          to="/contact"
+          className="py-1 text-base"
+          activeClassName="underline"
+        >
+          Liên hệ
+          <hr className='border-none outline-none h-0.5 bg-[#00759c] w-3/5 m-auto hidden' />
         </NavLink>
-        <NavLink to="/all-schedule" activeClassName="underline">
-          <li className="py-1 text-base">Lịch làm việc</li>
+        <NavLink
+          to="/all-schedule"
+          className="py-1 text-base"
+          activeClassName="underline"
+        >
+          Lịch làm việc
+          <hr className='border-none outline-none h-0.5 bg-[#00759c] w-3/5 m-auto hidden' />
         </NavLink>
       </ul>
-
-      <div className="flex items-center gap-4">
-        {user ? (
+      <div className="flex items-center gap-4 relative">
+        {isLoggedIn ? (
           <div
             className="flex items-center gap-2 cursor-pointer relative"
             onMouseEnter={() => setShowDropdown(true)}
@@ -137,33 +88,52 @@ const Navbar = () => {
               alt="Avatar"
             />
             <p className="font-medium text-gray-700">{user.name}</p>
-            <img className="w-2.5" src={assets.dropdown_icon} alt="Dropdown Icon" />
-
+            <img
+              className="w-2.5"
+              src={assets.dropdown_icon}
+              alt="Dropdown Icon"
+            />
             {showDropdown && (
               <div className="absolute top-0 -left-6 pt-14 text-base font-medium text-gray-600 z-20">
                 <div className="min-w-52 bg-stone-100 rounded flex flex-col gap-4 p-4">
                   <p
-                    onClick={() => navigate("my-profile")}
+                    onClick={() => {
+                      navigate("my-profile");
+                      handleDropdownItemClick();
+                    }}
                     className="hover:text-black cursor-pointer"
                   >
+                    <i className="fa-regular fa-user mr-3"></i>
                     Hồ sơ của tôi
                   </p>
                   <p
-                    onClick={() => navigate("my-appointments")}
+                    onClick={() => {
+                      navigate("my-appointments");
+                      handleDropdownItemClick();
+                    }}
                     className="hover:text-black cursor-pointer"
                   >
+                    <i className="fa-regular fa-calendar-check mr-3"></i>
                     Lịch hẹn của tôi
                   </p>
                   <p
-                    onClick={() => navigate("medical-history")}
+                    onClick={() => {
+                      navigate("medical-history");
+                      handleDropdownItemClick();
+                    }}
                     className="hover:text-black cursor-pointer"
                   >
+                    <i className="fa-solid fa-laptop-medical mr-2"></i>
                     Lịch sử khám bệnh
                   </p>
                   <p
-                    onClick={handleLogout}
+                    onClick={() => {
+                      handleLogout();
+                      handleDropdownItemClick();
+                    }}
                     className="hover:text-black cursor-pointer"
                   >
+                    <i className="fa-solid fa-arrow-right-from-bracket mr-3"></i>
                     Đăng xuất
                   </p>
                 </div>
@@ -177,20 +147,16 @@ const Navbar = () => {
             </button>
           </NavLink>
         )}
-
-        {user && (
+        {isLoggedIn && (
           <div className="relative">
             <img
-              onClick={() => {
-                handleNotificationClick();
-                requestNotificationUpdate(); // Yêu cầu cập nhật danh sách thông báo khi click
-              }}
+              onClick={handleNotificationClick}
               className="w-6 cursor-pointer"
               src={assets.notification_icon}
               alt="Thông báo"
             />
             {unreadCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-1">
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1">
                 {unreadCount}
               </span>
             )}

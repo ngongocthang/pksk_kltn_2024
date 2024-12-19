@@ -205,6 +205,7 @@ const DoctorContextProvider = (props) => {
       }
     } catch (error) {
       console.log(error);
+      toast.error("Có lỗi xảy ra khi lấy lịch hẹn!");
       return null;
     }
   };

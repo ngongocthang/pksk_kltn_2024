@@ -126,7 +126,7 @@ const deleteAllNotifications = async (req, res) => {
     await Notification.deleteMany({});
     return res
       .status(200)
-      .json({ message: "All notifications deleted successfully!" });
+      .json({success: true, message: "All notifications deleted successfully!" });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }

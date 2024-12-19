@@ -1,6 +1,6 @@
 const Appointment = require("../models/Appointment");
 const User = require("../models/User");
-const Notification = require("../models/Notification"); // Thêm import model Notification
+const Notification = require("../models/Notification");
 const transporter = require("../helpers/mailer-config");
 const moment = require("moment");
 require("moment/locale/vi");

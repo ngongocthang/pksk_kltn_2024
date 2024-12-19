@@ -190,6 +190,123 @@ const formatVietnameseDate = (date) => {
   return formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
 };
 
+// const patientCreateAppointment = async (req, res) => {
+//   try {
+//     const user_id = req.params.id;
+
+//     // Lấy thông tin bệnh nhân
+//     const patient = await Patient.findOne({ user_id: user_id });
+//     if (!patient) {
+//       return res.status(400).json({ message: "Patient not found" });
+//     }
+
+//     // Kiểm tra bác sĩ có tồn tại hay không
+//     const checkDoctor = await Doctor.findOne({ _id: req.body.doctor_id });
+//     if (!checkDoctor) {
+//       return res.status(400).json({ message: "Bác sĩ không tồn tại!" });
+//     }
+
+//     // Kiểm tra xem lịch hẹn đã tồn tại chưa
+//     const checkAppointment = await Appointment.findOne({
+//       patient_id: patient._id,
+//       work_date: req.body.work_date,
+//       work_shift: req.body.work_shift,
+//       status: { $nin: ["canceled"] },
+//     });
+//     if (checkAppointment) {
+//       return res.status(400).json({ message: "Bạn đã đặt lịch hẹn này rồi!" });
+//     }
+
+//     // Kiểm tra nếu đã hủy 2 lần trước đó
+//     const canceledCount = await Appointment.countDocuments({
+//       patient_id: patient._id,
+//       work_date: req.body.work_date,
+//       work_shift: req.body.work_shift,
+//       status: "canceled",
+//     });
+//     if (canceledCount >= 2) {
+//       return res.status(400).json({
+//         message: "Bạn đã hủy lịch hẹn này hai lần, không thể đặt lại!",
+//       });
+//     }
+
+//     // Kiểm tra số lượng lịch hẹn trong ngày
+//     const dailyAppointments = await Appointment.countDocuments({
+//       patient_id: patient._id,
+//       work_date: req.body.work_date,
+//       status: { $nin: ["canceled"] },
+//     });
+
+//     if (dailyAppointments >= 4) {
+//       return res.status(400).json({
+//         message: "Bạn chỉ có thể đặt tối đa 4 lịch hẹn trong một ngày!",
+//       });
+//     }
+
+//     // Xác định thời gian buổi sáng và buổi chiều
+//     const appointmentDate = new Date(req.body.work_date);
+    
+//     // Thời gian hiện tại (UTC)
+//     const currentTime = new Date();
+
+//     // Kiểm tra ca làm việc
+//     if (req.body.work_shift === "morning") {
+//       const morningDeadline = new Date(appointmentDate);
+//       morningDeadline.setUTCHours(7, 30, 0, 0); // 7h30 sáng (UTC)
+
+//       if (currentTime > morningDeadline) {
+//         return res.status(400).json({
+//           message: "Bạn chỉ có thể đặt lịch hẹn cho buổi sáng trước 7h30!",
+//         });
+//       }
+//     } else if (req.body.work_shift === "afternoon") {
+//       const afternoonDeadline = new Date(appointmentDate);
+//       afternoonDeadline.setUTCHours(13, 30, 0, 0); // 1h30 chiều (UTC)
+
+//       if (currentTime > afternoonDeadline) {
+//         return res.status(400).json({
+//           message: "Bạn chỉ có thể đặt lịch hẹn cho buổi chiều trước 13h30!",
+//         });
+//       }
+//     }
+
+//     // Tạo lịch hẹn
+//     const appointment = await Appointment.create({
+//       ...req.body,
+//       patient_id: patient._id,
+//     });
+
+//     // Lưu vào lịch sử hẹn
+//     await Appointment_history.create({
+//       appointment_id: appointment._id,
+//       patient_id: patient._id,
+//       doctor_id: appointment.doctor_id,
+//     });
+
+//     const formattedDate = formatVietnameseDate(appointment.work_date);
+
+//     // Tạo thông báo
+//     await Notification.create({
+//       patient_id: appointment.patient_id,
+//       doctor_id: appointment.doctor_id,
+//       content: `Bạn đã đặt lịch hẹn vào ngày: ${formattedDate}, hãy chờ phản hồi từ bác sĩ.`,
+//       appointment_id: appointment._id,
+//       recipientType: "patient",
+//     });
+
+//     await Notification.create({
+//       patient_id: appointment.patient_id,
+//       doctor_id: appointment.doctor_id,
+//       content: `Bạn có lịch hẹn đang chờ xác nhận vào ngày: ${formattedDate}.`,
+//       appointment_id: appointment._id,
+//       recipientType: "doctor",
+//     });
+
+//     return res.status(200).json(appointment);
+//   } catch (error) {
+//     return res.status(500).json({ message: error.message });
+//   }
+// };
 const patientCreateAppointment = async (req, res) => {
   try {
     const user_id = req.params.id;
@@ -246,26 +363,26 @@ const patientCreateAppointment = async (req, res) => {
     // Xác định thời gian buổi sáng và buổi chiều
     const appointmentDate = new Date(req.body.work_date);
     
-    // Thời gian hiện tại (UTC)
-    const currentTime = new Date();
+    // Thời gian hiện tại (UTC+7)
+    const currentTime = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Bangkok" }));
 
     // Kiểm tra ca làm việc
     if (req.body.work_shift === "morning") {
-      const morningDeadline = new Date(appointmentDate);
-      morningDeadline.setUTCHours(7, 30, 0, 0); // 7h30 sáng (UTC)
+      const morningStart = new Date(appointmentDate);
+      morningStart.setUTCHours(0, 30, 0, 0); // 7h30 sáng (UTC+7)
 
-      if (currentTime > morningDeadline) {
+      if (currentTime > morningStart) {
         return res.status(400).json({
           message: "Bạn chỉ có thể đặt lịch hẹn cho buổi sáng trước 7h30!",
         });
       }
     } else if (req.body.work_shift === "afternoon") {
-      const afternoonDeadline = new Date(appointmentDate);
-      afternoonDeadline.setUTCHours(13, 30, 0, 0); // 1h30 chiều (UTC)
+      const afternoonStart = new Date(appointmentDate);
+      afternoonStart.setUTCHours(6, 30, 0, 0); 
 
-      if (currentTime > afternoonDeadline) {
+      if (currentTime > afternoonStart) {
         return res.status(400).json({
-          message: "Bạn chỉ có thể đặt lịch hẹn cho buổi chiều trước 13h30!",
+          message: "Bạn chỉ có thể đặt lịch hẹn cho buổi chiều từ 13h30!",
         });
       }
     }
@@ -307,6 +424,7 @@ const patientCreateAppointment = async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 };
+
 
 const getCurrentUserAppointments = async (req, res) => {
   try {
@@ -452,8 +570,6 @@ const processPrematureCancellation = async (req, res) => {
       appointment_id: appointmentUd._id,
       recipientType: "doctor",
     });
-
-    console.log("log email doctor", infoDoctor.email);
 
     const mailOptionsDoctor = {
       from: process.env.EMAIL_USER,
