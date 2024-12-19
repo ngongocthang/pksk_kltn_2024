@@ -1,115 +1,97 @@
-const WebSocket = require("ws");
-const {
-  getCurrentUserNotifications,
-} = require("../controllers/NotificationController/index");
+const Ably = require('ably');
 const Patient = require("../models/Patient");
 const Notification = require("../models/Notification");
 
-const createWebSocketServer = (httpServer) => {
-  const wss = new WebSocket.Server({ noServer: true });
-  const clients = new Map(); // Lưu trữ user_id tương ứng với WebSocket client
+const ABLY_KEY = process.env.ABLY_KEY;
+// Khởi tạo Ably với API key của bạn
+const ably = new Ably.Realtime(ABLY_KEY);
 
-  wss.on("connection", (ws, req) => {
-    console.log("WebSocket client connected");
+// Tạo một channel để gửi và nhận thông báo
+const channel = ably.channels.get('notifications');
 
-    ws.on("message", async (message) => {
-      const parsedMessage = JSON.parse(message);
-      const { user_id, action } = parsedMessage;
+const clients = new Map(); // Lưu trữ user_id tương ứng với Ably client
 
-      if (!user_id) {
-        return ws.send(
-          JSON.stringify({ success: false, message: "User ID is required" })
-        );
-      }
+// Hàm gửi thông báo
+const sendNotification = async (user_id, message) => {
+  try {
+    await channel.publish('notification', { user_id, message });
+    console.log('Notification sent:', message);
+  } catch (error) {
+    console.error('Error sending notification:', error);
+  }
+};
 
-      // Lưu client và user_id để gửi thông báo real-time
-      clients.set(user_id, ws);
+// Lắng nghe thông báo từ channel
+channel.subscribe('notification', async (message) => {
+  const { user_id } = message.data;
+  
+  // Xử lý thông báo nhận được
+  if (clients.has(user_id)) {
+    const patient = await Patient.findOne({ user_id });
+    if (patient) {
+      const notifications = await Notification.find({
+        patient_id: patient._id,
+        recipientType: "patient",
+      }).sort({ createdAt: -1 });
 
+      const unreadNotifications = notifications.filter((n) => !n.isRead);
+      
       // Gửi thông báo cho client
-      const sendNotifications = async () => {
-        try {
-          const patient = await Patient.findOne({ user_id });
-          if (!patient) {
-            return ws.send(
-              JSON.stringify({ success: false, message: "Patient not found" })
-            );
-          }
+      clients.get(user_id).send(
+        JSON.stringify({
+          success: true,
+          unreadCount: unreadNotifications.length,
+          notifications: notifications, // Gửi tất cả thông báo
+        })
+      );
+    }
+  }
+});
 
-          const notifications = await Notification.find({
-            patient_id: patient._id,
-            recipientType: "patient",
-          }).sort({ createdAt: -1 });
+// Hàm kết nối client
+const connectClient = (user_id, ws) => {
+  if (!user_id) {
+    ws.send(JSON.stringify({ success: false, message: "User ID is required" }));
+    return;
+  }
 
-          const unreadNotifications = notifications.filter((n) => !n.isRead);
-          ws.send(
-            JSON.stringify({
-              success: true,
-              unreadCount: unreadNotifications.length,
-              notifications: notifications, // Gửi tất cả thông báo
-            })
-          );
-        } catch (error) {
-          console.error("Error fetching notifications:", error);
-          ws.send(JSON.stringify({ success: false, message: error.message }));
-        }
-      };
+  // Lưu client và user_id để gửi thông báo real-time
+  clients.set(user_id, ws);
 
-      // Nếu client yêu cầu cập nhật thủ công
-      if (action === "update") {
-        await sendNotifications();
-      }
-    });
+  // Gửi thông báo cho client khi kết nối
+  sendNotification(user_id, "Connected to notifications");
+};
 
-    ws.on("close", () => {
-      console.log("WebSocket client disconnected");
-      clients.forEach((clientWs, userId) => {
-        if (clientWs === ws) clients.delete(userId);
-      });
-    });
-  });
-
-  // Theo dõi thay đổi trong collection Notification
+// Hàm theo dõi thay đổi trong collection Notification
+const watchNotifications = () => {
   Notification.watch().on("change", async (change) => {
     try {
       const { operationType, fullDocument } = change;
-
       if (operationType === "insert" || operationType === "update") {
         const patientId = fullDocument.patient_id;
         const patient = await Patient.findById(patientId);
         if (patient) {
-          const clientWs = clients.get(patient.user_id);
-          if (clientWs && clientWs.readyState === WebSocket.OPEN) {
-            const unreadNotifications = await Notification.find({
-              patient_id: patientId,
-              isRead: false,
-            }).sort({ createdAt: -1 });
+          const unreadNotifications = await Notification.find({
+            patient_id: patientId,
+            isRead: false,
+          }).sort({ createdAt: -1 });
 
-            const allNotifications = await Notification.find({
-              patient_id: patientId,
-            }).sort({ createdAt: -1 });
+          const allNotifications = await Notification.find({
+            patient_id: patientId,
+          }).sort({ createdAt: -1 });
 
-            clientWs.send(
-              JSON.stringify({
-                success: true,
-                unreadCount: unreadNotifications.length,
-                notifications: allNotifications,
-              })
-            );
-          }
+          // Gửi thông báo cho user
+          sendNotification(patient.user_id, {
+            unreadCount: unreadNotifications.length,
+            notifications: allNotifications,
+          });
         }
       }
     } catch (error) {
       console.error("Error sending real-time notifications:", error);
     }
   });
-
-  httpServer.on("upgrade", (request, socket, head) => {
-    wss.handleUpgrade(request, socket, head, (ws) => {
-      wss.emit("connection", ws, request);
-    });
-  });
-
-  return wss;
 };
 
-module.exports = createWebSocketServer;
+// Xuất các hàm cần thiết
+module.exports = { sendNotification, connectClient, watchNotifications };

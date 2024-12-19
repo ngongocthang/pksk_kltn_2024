@@ -1,10 +1,13 @@
 import PropTypes from "prop-types";
 import { createContext, useEffect, useRef, useState } from "react";
+import Ably from 'ably/promises'; // Import Ably
+
 export const AppContext = createContext();
 const VITE_BACKEND_URI = import.meta.env.VITE_BACKEND_URI;
+const ably = new Ably.Realtime('YOUR_API_KEY'); // Thay YOUR_API_KEY bằng API key của bạn
+
 const AppContextProvider = (props) => {
   const [user, setUser] = useState(() => {
-    // Khôi phục thông tin người dùng từ localStorage
     const savedUser = localStorage.getItem("user");
     return savedUser ? JSON.parse(savedUser) : null;
   });
@@ -12,62 +15,42 @@ const AppContextProvider = (props) => {
   const [patient, setPatient] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const wsRef = useRef(null);
-  // WebSocket setup
+  const channel = useRef(null); // Thay đổi từ wsRef sang channel
+
   useEffect(() => {
-    let intervalId;
-    const initializeWebSocket = () => {
-      const wsProtocol =
-        window.location.protocol === "https:" ? "wss://" : "ws://";
-      const ws = new WebSocket(
-        `${wsProtocol}${VITE_BACKEND_URI.replace("http://", "")}`
-      );
-      wsRef.current = ws;
-      ws.onopen = () => {
-        console.log("WebSocket connection opened");
-        if (user) {
-          ws.send(JSON.stringify({ user_id: user.id }));
-        }
-      };
-      ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.notifications) {
-          setNotifications(data.notifications);
+    if (user) {
+      channel.current = ably.channels.get('notifications');
+
+      channel.current.subscribe('notification', (message) => {
+        const data = message.data;
+        if (data.user_id === user.id) {
+          setNotifications(prev => [...prev, ...data.notifications]);
           const unread = data.notifications.filter((n) => !n.isRead).length;
           setUnreadCount(unread);
         }
-      };
-      ws.onerror = (error) => {
-        console.error("WebSocket error:", error);
-      };
-      ws.onclose = () => {
-        console.log("WebSocket connection closed");
-      };
+      });
+
+      // Gửi thông báo khi kết nối
+      channel.current.publish('notification', { user_id: user.id, action: 'connect' });
+
       // Cập nhật định kỳ thông báo
-      intervalId = setInterval(() => {
+      const intervalId = setInterval(() => {
         requestNotificationUpdate();
       }, 2000);
-    };
-    if (user) {
-      initializeWebSocket();
+
+      return () => {
+        clearInterval(intervalId);
+        channel.current.unsubscribe(); // Ngắt đăng ký khi component unmount
+      };
     }
-    return () => {
-      // Cleanup
-      if (intervalId) clearInterval(intervalId);
-      if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
-      }
-    };
   }, [user]);
-  // Request notification update
+
   const requestNotificationUpdate = () => {
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN && user) {
-      wsRef.current.send(
-        JSON.stringify({ user_id: user.id, action: "update" })
-      );
+    if (channel.current) {
+      channel.current.publish('notification', { user_id: user.id, action: 'update' });
     }
   };
+
   const value = {
     user,
     setUser: (newUser) => {
@@ -90,11 +73,14 @@ const AppContextProvider = (props) => {
     unreadCount,
     requestNotificationUpdate,
   };
+
   return (
     <AppContext.Provider value={value}>{props.children}</AppContext.Provider>
   );
 };
+
 AppContextProvider.propTypes = {
   children: PropTypes.node.isRequired,
 };
+
 export default AppContextProvider;
