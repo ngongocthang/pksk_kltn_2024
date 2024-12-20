@@ -4,6 +4,9 @@ import Ably from 'ably';
 
 export const AppContext = createContext();
 const VITE_ABLY_KEY = import.meta.env.VITE_ABLY_KEY;
+
+console.log('Ably Key:', VITE_ABLY_KEY);
+
 const ably = new Ably.Realtime(VITE_ABLY_KEY);
 
 const AppContextProvider = (props) => {
