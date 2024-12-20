@@ -3,9 +3,8 @@ import { createContext, useEffect, useRef, useState } from "react";
 import Ably from 'ably';
 
 export const AppContext = createContext();
-const ABLY_KEY = import.meta.env.ABLY_KEY;
-const ably = new Ably.Realtime(ABLY_KEY);
-console.log("ably", ably);
+const VITE_ABLY_KEY = import.meta.env.VITE_ABLY_KEY;
+const ably = new Ably.Realtime(VITE_ABLY_KEY);
 
 const AppContextProvider = (props) => {
   const [user, setUser] = useState(() => {
