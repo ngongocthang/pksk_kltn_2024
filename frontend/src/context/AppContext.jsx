@@ -26,6 +26,9 @@ const AppContextProvider = (props) => {
 
       channel.current.subscribe('notification', (message) => {
         const data = message.data;
+
+        console.log('Received notification data:', data);
+
         if (data.user_id === user.id) {
           setNotifications(prev => [...prev, ...data.notifications]);
           const unread = data.notifications.filter((n) => !n.isRead).length;
